@@ -1,0 +1,35 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f9f9f9;
+    text-align: center;
+    margin: 20px;
+}
+
+h1 {
+    color: #444;
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(15, 40px);
+    margin: 20px auto;
+    width: fit-content;
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ccc;
+    line-height: 40px;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.cell:hover {
+    background: #f0f8ff;
+}
+
+#turn, #info {
+    font-size: 16px;
+    margin-top: 10px;
+}
