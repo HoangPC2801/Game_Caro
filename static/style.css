@@ -85,8 +85,8 @@ h1 {
     transform: translateY(-2px);
 }
 
-/* Game Info and Turn Text */
-#info, #turn {
+/* Game Info, Turn, and Timer Text */
+#info, #turn, #timer {
     font-size: 1.1rem;
     color: #2c3e50;
     margin: 10px 0;
@@ -94,6 +94,10 @@ h1 {
     padding: 8px 15px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+#timer {
+    color: #e74c3c; /* Red for urgency */
 }
 
 /* Board Styling */
@@ -138,10 +142,21 @@ h1 {
     animation: placeSymbol 0.3s ease;
 }
 
+.cell.winning {
+    background: #f1c40f; /* Yellow highlight for winning cells */
+    animation: highlightWinning 0.5s ease-in-out;
+}
+
 /* Animation for placing symbols */
 @keyframes placeSymbol {
     0% { transform: scale(0); }
     100% { transform: scale(1); }
+}
+
+/* Animation for winning highlight */
+@keyframes highlightWinning {
+    0% { background: #f7f9fc; }
+    100% { background: #f1c40f; }
 }
 
 /* Loading Spinner */

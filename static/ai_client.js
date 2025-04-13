@@ -7,12 +7,36 @@ const boardSize = 15;
 const boardDiv = document.getElementById("board");
 const info = document.getElementById("info");
 const turnText = document.getElementById("turn");
+const timerText = document.getElementById("timer");
 const restartButton = document.getElementById("restart-button");
 const loadingSpinner = document.getElementById("loading");
 
 const clickSound = new Audio("/static/sounds/click.mp3");
 const moveSound = new Audio("/static/sounds/move.mp3");
 const winSound = new Audio("/static/sounds/win.mp3");
+
+let timerInterval = null;
+
+function startTimer() {
+    clearTimer();
+    let timeLeft = 30;
+    timerText.innerText = `Time: ${timeLeft}s`;
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerText.innerText = `Time: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+            clearTimer();
+            socket.emit("timeout_ai");
+        }
+    }, 1000);
+}
+
+function clearTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
 
 // Khởi tạo bàn cờ
 function createBoard() {
@@ -37,6 +61,7 @@ function makeMove(row, col, cell) {
         socket.emit("make_move_ai", { row, col, symbol: mySymbol });
         loadingSpinner.style.display = "block";
         moveSound.play();
+        clearTimer();
     }
 }
 
@@ -46,16 +71,25 @@ function restartGame() {
     restartButton.style.display = "none";
     info.innerText = "You are 'X'. Start playing!";
     turnText.innerText = "Turn: X";
+    timerText.innerText = "Time: 30s";
     currentTurn = "X";
     createBoard();
+    startTimer();
 }
 
-// Khởi tạo bàn cờ khi tải trang
+// Khởi tạo bàn cờ và timer khi tải trang
 createBoard();
+startTimer();
 
 // Lắng nghe phản hồi từ server
 socket.on("update_board_ai", (data) => {
     const { row, col, symbol } = data;
+    if (row === -1 && col === -1) {
+        // Reset board
+        createBoard();
+        startTimer();
+        return;
+    }
     board[row][col] = symbol;
     const index = row * boardSize + col;
     const cell = boardDiv.children[index];
@@ -65,15 +99,48 @@ socket.on("update_board_ai", (data) => {
     turnText.innerText = `Turn: ${currentTurn}`;
     loadingSpinner.style.display = "none";
     moveSound.play();
+    if (currentTurn === "X") {
+        startTimer();
+    }
 });
 
 socket.on("game_over_ai", (data) => {
-    loadingSpinner.style.display = "none";
-    info.innerText = data.winner === mySymbol ? "🎉 You win!" : "🤖 AI wins!";
+    clearTimer();
+    let message = "";
+    if (data.reason === "timeout") {
+        message = "🤖 AI wins due to timeout!";
+    } else {
+        message = data.winner === mySymbol ? "🎉 You win!" : "🤖 AI wins!";
+        // Highlight winning line
+        if (data.winning_cells && data.winning_cells.length) {
+            data.winning_cells.forEach(([row, col]) => {
+                const index = row * boardSize + col;
+                const cell = boardDiv.children[index];
+                cell.classList.add("winning");
+            });
+        }
+    }
+    info.innerText = message;
     turnText.innerText = "";
+    timerText.innerText = "";
     restartButton.style.display = "block";
+    loadingSpinner.style.display = "none";
     winSound.play();
-    // Vô hiệu hóa bàn cờ
+    // Disable board
+    for (let cell of boardDiv.children) {
+        cell.onclick = null;
+    }
+});
+
+socket.on("timeout_ai", () => {
+    clearTimer();
+    info.innerText = "🤖 AI wins due to timeout!";
+    turnText.innerText = "";
+    timerText.innerText = "";
+    restartButton.style.display = "block";
+    loadingSpinner.style.display = "none";
+    winSound.play();
+    // Disable board
     for (let cell of boardDiv.children) {
         cell.onclick = null;
     }

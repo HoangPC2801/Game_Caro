@@ -5,6 +5,7 @@ import random
 import copy
 import time
 import math
+import threading
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -12,6 +13,22 @@ socketio = SocketIO(app)
 
 rooms = {}
 ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X"}
+
+def start_timer(room, current_symbol):
+    """Start a 30-second timer for the current player's turn."""
+    if room not in rooms:
+        return
+    rooms[room]['timer'] = time.time() + 30  # Set end time
+    while room in rooms and rooms[room]['timer'] and time.time() < rooms[room]['timer']:
+        remaining = int(rooms[room]['timer'] - time.time())
+        if remaining < 0:
+            break
+        socketio.emit('timer_update', {'remaining': remaining, 'symbol': current_symbol}, room=room)
+        socketio.sleep(1)
+    if room in rooms and rooms[room]['timer'] and time.time() >= rooms[room]['timer']:
+        winner = "O" if current_symbol == "X" else "X"
+        socketio.emit('game_over', {'winner': winner, 'winning_cells': [], 'reason': 'timeout'}, room=room)
+        rooms[room]['timer'] = None
 
 @app.route('/')
 def home():
@@ -29,22 +46,24 @@ def check_win(board, row, col, symbol):
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
     for dr, dc in directions:
         count = 1
-        r, c = row - dr, col - dc
-        while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == symbol:
-            count += 1
-            r -= dr
-            c -= dc
+        winning_cells = [(row, col)]
         r, c = row + dr, col + dc
         while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == symbol:
             count += 1
+            winning_cells.append((r, c))
             r += dr
             c += dc
+        r, c = row - dr, col - dc
+        while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == symbol:
+            count += 1
+            winning_cells.append((r, c))
+            r -= dr
+            c -= dc
         if count >= 5:
-            return True
-    return False
+            return True, winning_cells[:5]
+    return False, []
 
 def get_valid_moves(board, last_move=None):
-    """Lấy danh sách nước đi hợp lệ, ưu tiên gần last_move nếu có."""
     moves = []
     if last_move:
         row, col = last_move
@@ -58,16 +77,13 @@ def get_valid_moves(board, last_move=None):
             for j in range(15):
                 if board[i][j] == "":
                     moves.append((i, j))
-    random.shuffle(moves)  # Xáo trộn để tránh thiên hướng cố định
+    random.shuffle(moves)
     return moves
 
 def evaluate_heuristic(board, symbol, last_move=None):
-    """Đánh giá bảng dựa trên chuỗi ký hiệu liên tiếp."""
     opponent = "X" if symbol == "O" else "O"
     score = 0
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
-
-    # Duyệt các ô để tìm chuỗi
     for i in range(15):
         for j in range(15):
             if board[i][j] == "":
@@ -76,12 +92,10 @@ def evaluate_heuristic(board, symbol, last_move=None):
                 count = 0
                 open_ends = 0
                 r, c = i, j
-                # Đếm ký hiệu liên tiếp
                 while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == board[i][j]:
                     count += 1
                     r += dr
                     c += dc
-                # Kiểm tra đầu mở
                 if 0 <= r < 15 and 0 <= c < 15 and board[r][c] == "":
                     open_ends += 1
                 r, c = i - dr, j - dc
@@ -91,21 +105,20 @@ def evaluate_heuristic(board, symbol, last_move=None):
                     c -= dc
                 if 0 <= r < 15 and 0 <= c < 15 and board[r][c] == "":
                     open_ends += 1
-                # Gán điểm dựa trên độ dài chuỗi và đầu mở
                 if board[i][j] == symbol:
                     if count == 4 and open_ends >= 1:
-                        score += 1000  # Chuỗi 4 có thể thắng
+                        score += 1000
                     elif count == 3 and open_ends >= 1:
-                        score += 100  # Chuỗi 3 nguy hiểm
+                        score += 100
                     elif count == 2 and open_ends >= 1:
-                        score += 10  # Chuỗi 2 tiềm năng
-                else:  # Đối thủ
+                        score += 10
+                else:
                     if count == 4 and open_ends >= 1:
-                        score -= 900  # Phải chặn ngay
+                        score -= 900
                     elif count == 3 and open_ends >= 1:
-                        score -= 90  # Nguy cơ cao
+                        score -= 90
                     elif count == 2 and open_ends >= 1:
-                        score -= 5  # Nguy cơ thấp
+                        score -= 5
     return score
 
 class MCTSNode:
@@ -122,7 +135,7 @@ class MCTSNode:
 
     def is_terminal(self):
         if self.move:
-            return check_win(self.board, self.move[0], self.move[1], self.symbol)
+            return check_win(self.board, self.move[0], self.move[1], self.symbol)[0]
         return False
 
     def get_uct(self):
@@ -140,15 +153,13 @@ class MCTSNode:
             self.children.append(child)
 
     def simulate(self):
-        """Mô phỏng với heuristic thay vì ngẫu nhiên hoàn toàn."""
         temp_board = copy.deepcopy(self.board)
         last_move = self.move
         current_symbol = "X" if self.symbol == "O" else "O"
         for _ in range(50):
             moves = get_valid_moves(temp_board, last_move)
             if not moves:
-                return 0  # Hòa
-            # Chọn nước đi dựa trên heuristic
+                return 0
             best_move = None
             best_score = float('-inf')
             for move in moves:
@@ -158,45 +169,37 @@ class MCTSNode:
                 if score > best_score:
                     best_score = score
                     best_move = move
-            # Thêm yếu tố ngẫu nhiên để đa dạng hóa
-            if random.random() < 0.2:  # 20% chọn ngẫu nhiên
+            if random.random() < 0.2:
                 best_move = random.choice(moves)
             temp_board[best_move[0]][best_move[1]] = current_symbol
-            if check_win(temp_board, best_move[0], best_move[1], current_symbol):
+            if check_win(temp_board, best_move[0], best_move[1], current_symbol)[0]:
                 return 1 if current_symbol == "O" else -1
             last_move = best_move
             current_symbol = "X" if current_symbol == "O" else "O"
-        # Đánh giá cuối cùng bằng heuristic
         final_score = evaluate_heuristic(temp_board, "O", last_move)
         if final_score > 0:
-            return 0.5  # Ưu thế cho AI
+            return 0.5
         elif final_score < 0:
-            return -0.5  # Ưu thế cho người chơi
-        return 0  # Trung lập
+            return -0.5
+        return 0
 
-def mcts(board, last_move, time_limit=0.5):
-    """Thực hiện MCTS trong thời gian giới hạn."""
+def mcts(board, last_move, time_limit=0.8):
     root = MCTSNode(board, symbol="O")
     start_time = time.time()
-
     while time.time() - start_time < time_limit:
         node = root
         while node.children and not node.is_terminal():
             node = max(node.children, key=lambda c: c.get_uct())
-
         if not node.is_terminal() and not node.children:
             node.expand()
-
         sim_node = node
         if node.children:
             sim_node = random.choice(node.children)
         result = sim_node.simulate()
-
         while sim_node:
             sim_node.visits += 1
             sim_node.wins += result if sim_node.symbol == "O" else -result
             sim_node = sim_node.parent
-
     if root.children:
         best_child = max(root.children, key=lambda c: c.visits)
         return best_child.move
@@ -208,13 +211,15 @@ def on_join(data):
     room = data.get('room')
     join_room(room)
     if room not in rooms:
-        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X'}
+        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None}
         emit('room_created', {'room': room}, room=sid)
     else:
         if len(rooms[room]['players']) < 2:
             rooms[room]['players'].append(sid)
             emit('start_game', {'symbol': 'O'}, room=sid)
             emit('start_game', {'symbol': 'X'}, room=rooms[room]['players'][0])
+            # Start timer for X's turn
+            socketio.start_background_task(start_timer, room, 'X')
         else:
             emit('room_full', {}, room=sid)
 
@@ -229,8 +234,15 @@ def on_move(data):
         if board[row][col] == "":
             board[row][col] = symbol
             emit("update_board", {'row': row, 'col': col, 'symbol': symbol}, room=room)
-            if check_win(board, row, col, symbol):
-                emit("game_over", {'winner': symbol}, room=room)
+            is_win, winning_cells = check_win(board, row, col, symbol)
+            if is_win:
+                emit("game_over", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'}, room=room)
+                rooms[room]['timer'] = None
+            else:
+                # Reset timer for the next player's turn
+                next_symbol = 'O' if symbol == 'X' else 'X'
+                rooms[room]['timer'] = None  # Clear previous timer
+                socketio.start_background_task(start_timer, room, next_symbol)
 
 @socketio.on('make_move_ai')
 def on_move_ai(data):
@@ -242,8 +254,9 @@ def on_move_ai(data):
     if board[row][col] == "":
         board[row][col] = symbol
         emit("update_board_ai", {'row': row, 'col': col, 'symbol': symbol})
-        if check_win(board, row, col, symbol):
-            emit("game_over_ai", {'winner': symbol})
+        is_win, winning_cells = check_win(board, row, col, symbol)
+        if is_win:
+            emit("game_over_ai", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'})
             return
         # AI's turn
         ai_move = mcts(board, (row, col), time_limit=0.8)
@@ -251,8 +264,9 @@ def on_move_ai(data):
             ai_row, ai_col = ai_move
             board[ai_row][ai_col] = "O"
             emit("update_board_ai", {'row': ai_row, 'col': ai_col, 'symbol': "O"})
-            if check_win(board, ai_row, ai_col, "O"):
-                emit("game_over_ai", {'winner': "O"})
+            is_win, winning_cells = check_win(board, ai_row, ai_col, "O")
+            if is_win:
+                emit("game_over_ai", {'winner': "O", 'winning_cells': winning_cells, 'reason': 'win'})
 
 @socketio.on('restart_ai_game')
 def on_restart_ai():

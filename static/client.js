@@ -8,6 +8,7 @@ const boardSize = 15;
 const boardDiv = document.getElementById("board");
 const info = document.getElementById("info");
 const turnText = document.getElementById("turn");
+const timerText = document.getElementById("timer");
 const restartButton = document.getElementById("restart-button");
 const loadingSpinner = document.getElementById("loading");
 
@@ -70,6 +71,7 @@ socket.on("start_game", (data) => {
     mySymbol = data.symbol;
     info.innerText = `You are '${mySymbol}'. Let's play!`;
     turnText.innerText = `Turn: X`;
+    timerText.innerText = `Time: 30s`;
     restartButton.style.display = "none";
     loadingSpinner.style.display = "none";
     createBoard();
@@ -94,13 +96,32 @@ socket.on("update_board", (data) => {
     moveSound.play();
 });
 
+socket.on("timer_update", (data) => {
+    timerText.innerText = `Time: ${data.remaining}s`;
+});
+
 socket.on("game_over", (data) => {
-    info.innerText = `🎉 Player '${data.winner}' wins!`;
+    let message = "";
+    if (data.reason === "timeout") {
+        message = `🎉 Player '${data.winner}' wins due to timeout!`;
+    } else {
+        message = `🎉 Player '${data.winner}' wins!`;
+        // Highlight winning line
+        if (data.winning_cells && data.winning_cells.length) {
+            data.winning_cells.forEach(([row, col]) => {
+                const index = row * boardSize + col;
+                const cell = boardDiv.children[index];
+                cell.classList.add("winning");
+            });
+        }
+    }
+    info.innerText = message;
     turnText.innerText = "";
+    timerText.innerText = "";
     restartButton.style.display = "block";
     loadingSpinner.style.display = "none";
     winSound.play();
-    // Vô hiệu hóa bàn cờ
+    // Disable board
     for (let cell of boardDiv.children) {
         cell.onclick = null;
     }
