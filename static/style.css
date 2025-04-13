@@ -26,24 +26,6 @@ h1 {
     gap: 10px;
 }
 
-/* Back Button */
-.back-button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    background: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-bottom: 15px;
-    transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.back-button:hover {
-    background: #c0392b;
-    transform: translateY(-2px);
-}
-
 /* Room Container Styling */
 #room-container {
     background: #ffffff;
@@ -85,8 +67,8 @@ h1 {
     transform: translateY(-2px);
 }
 
-/* Game Info and Turn Text */
-#info, #turn {
+/* Game Info */
+#info {
     font-size: 1.1rem;
     color: #2c3e50;
     margin: 10px 0;
@@ -96,39 +78,213 @@ h1 {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Progress Bar */
+/* Game Controls Container */
+#game-controls-container {
+    position: fixed;
+    bottom: 360px;
+    right: 20px;
+    width: 250px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+#game-controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f39c12;
+    color: white;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+#game-controls-header span {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+#game-controls-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: transform 0.2s ease;
+}
+
+#game-controls-toggle:hover {
+    transform: scale(1.2);
+}
+
+#game-controls-content {
+    display: block;
+    flex-direction: column;
+    padding: 10px;
+}
+
+#turn {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin: 5px 0;
+    text-align: center;
+}
+
 .progress-container {
-    width: 200px;
+    width: 100%;
     height: 20px;
     background: #dfe6e9;
     border-radius: 10px;
     overflow: hidden;
-    margin: 10px auto;
+    margin: 10px 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .progress-bar {
     width: 100%;
     height: 100%;
-    background: #e74c3c; /* Red for urgency */
+    background: #e74c3c;
     transition: width 0.1s linear;
 }
 
-/* Pause Button */
-#pause-button, #restart-button {
-    padding: 10px 20px;
+#back-button, #pause-button, #restart-button {
+    width: 100%;
+    padding: 10px;
     font-size: 1rem;
-    background: #f39c12;
+    background: #3498db;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    margin: 10px 0;
+    margin: 5px 0;
     transition: background 0.3s ease, transform 0.2s ease;
 }
 
-#pause-button:hover, #restart-button:hover {
-    background: #e67e22;
+#back-button:hover, #pause-button:hover, #restart-button:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+#back-button:disabled, #pause-button:disabled, #restart-button:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Chat Container */
+#chat-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 250px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+#chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #3498db;
+    color: white;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+#chat-header span {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+#chat-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: transform 0.2s ease;
+}
+
+#chat-toggle:hover {
+    transform: scale(1.2);
+}
+
+#chat-content {
+    display: block;
+    flex-direction: column;
+}
+
+#chat-messages {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    border-bottom: 1px solid #dfe6e9;
+}
+
+.chat-message {
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.x-message {
+    background: #ffe6e6;
+    color: #e74c3c;
+    margin-left: 20%;
+}
+
+.o-message {
+    background: #e6f3ff;
+    color: #3498db;
+    margin-right: 20%;
+}
+
+#chat-input-container {
+    display: flex;
+    padding: 10px;
+    gap: 10px;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 8px;
+    font-size: 0.9rem;
+    border: 2px solid #dfe6e9;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+#chat-input:focus {
+    border-color: #3498db;
+}
+
+#chat-input-container button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#chat-input-container button:hover {
+    background: #2980b9;
     transform: translateY(-2px);
 }
 
@@ -291,6 +447,20 @@ h1 {
     }
 
     .progress-container {
-        width: 150px;
+        width: 100%;
+    }
+
+    #game-controls-container, #chat-container {
+        width: 200px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    #game-controls-container {
+        bottom: 310px;
+    }
+
+    #chat-messages {
+        max-height: 150px;
     }
 }

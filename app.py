@@ -20,13 +20,13 @@ def start_timer(room, current_symbol):
         return
     if 'paused' not in rooms[room]:
         rooms[room]['paused'] = False
-    rooms[room]['timer'] = time.time() + 30  # Set end time
+    rooms[room]['timer'] = time.time() + 30
     while room in rooms and rooms[room]['timer'] and time.time() < rooms[room]['timer'] and not rooms[room]['paused']:
         remaining = rooms[room]['timer'] - time.time()
         if remaining < 0:
             break
         socketio.emit('timer_update', {'remaining': remaining, 'symbol': current_symbol}, room=room)
-        socketio.sleep(0.1)  # Faster updates for smoother progress bar
+        socketio.sleep(0.1)
     if room in rooms and rooms[room]['timer'] and time.time() >= rooms[room]['timer'] and not rooms[room]['paused']:
         winner = "O" if current_symbol == "X" else "X"
         socketio.emit('game_over', {'winner': winner, 'winning_cells': [], 'reason': 'timeout'}, room=room)
@@ -173,7 +173,7 @@ class MCTSNode:
                     best_move = move
             if random.random() < 0.2:
                 best_move = random.choice(moves)
-            temp_board[best_move[0]][best_move[1]] = current_symbol
+            temp_board[best_move[0]][move[1]] = current_symbol
             if check_win(temp_board, best_move[0], best_move[1], current_symbol)[0]:
                 return 1 if current_symbol == "O" else -1
             last_move = best_move
@@ -234,6 +234,7 @@ def on_move(data):
         board = rooms[room]['board']
         if board[row][col] == "" and not rooms[room]['paused']:
             board[row][col] = symbol
+            rooms[room]['turn'] = 'O' if symbol == 'X' else 'X'
             emit("update_board", {'row': row, 'col': col, 'symbol': symbol}, room=room)
             is_win, winning_cells = check_win(board, row, col, symbol)
             if is_win:
@@ -251,7 +252,7 @@ def on_pause(data):
     if room in rooms and not rooms[room]['paused']:
         rooms[room]['paused'] = True
         remaining = rooms[room]['timer'] - time.time() if rooms[room]['timer'] else 0
-        rooms[room]['timer'] = remaining  # Store remaining time
+        rooms[room]['timer'] = remaining
         emit('game_paused', {'remaining': remaining}, room=room)
 
 @socketio.on('resume_game')
@@ -260,8 +261,16 @@ def on_resume(data):
     if room in rooms and rooms[room]['paused']:
         rooms[room]['paused'] = False
         current_symbol = rooms[room]['turn']
-        rooms[room]['timer'] = time.time() + rooms[room]['timer']  # Resume from stored time
+        rooms[room]['timer'] = time.time() + rooms[room]['timer']
         socketio.start_background_task(start_timer, room, current_symbol)
+
+@socketio.on('send_message')
+def on_send_message(data):
+    room = data['room']
+    symbol = data['symbol']
+    message = data['message'].strip()
+    if room in rooms and message:
+        emit('receive_message', {'symbol': symbol, 'message': message}, room=room)
 
 @socketio.on('make_move_ai')
 def on_move_ai(data):
