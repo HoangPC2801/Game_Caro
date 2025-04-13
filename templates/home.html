@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Caro Online - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1><span>🎮</span> Caro Online</h1>
+    <div class="mode-container">
+        <h2>Choose Your Mode</h2>
+        <div class="mode-buttons">
+            <button onclick="goToHumanMode()">Play with Friend</button>
+            <button onclick="goToAIMode()">Play with AI</button>
+        </div>
+    </div>
+
+    <script>
+        function goToHumanMode() {
+            window.location.href = "/game";
+        }
+
+        function goToAIMode() {
+            // Placeholder for AI mode
+            alert("AI Mode is coming soon!");
+            // Future implementation: window.location.href = "/ai-game";
+        }
+    </script>
+</body>
+</html>

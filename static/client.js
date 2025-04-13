@@ -8,6 +8,7 @@ const boardSize = 15;
 const boardDiv = document.getElementById("board");
 const info = document.getElementById("info");
 const turnText = document.getElementById("turn");
+const restartButton = document.getElementById("restart-button");
 
 // Khởi tạo bàn cờ
 function createBoard() {
@@ -37,25 +38,34 @@ function makeMove(row, col, cell) {
 function joinRoom() {
     const roomCode = document.getElementById("room-input").value.trim();
     if (roomCode === "") {
-        alert("Vui lòng nhập mã phòng!");
+        alert("Please enter a room code!");
         return;
     }
     currentRoom = roomCode;
     socket.emit("join_game", { room: roomCode });
     document.getElementById("room-container").style.display = "none";
-    info.innerText = "Đang chờ người chơi khác...";
+    info.innerText = "Waiting for another player...";
+}
+
+// Hàm khởi động lại game
+function restartGame() {
+    socket.emit("join_game", { room: currentRoom });
+    restartButton.style.display = "none";
+    info.innerText = "Waiting for another player...";
+    createBoard();
 }
 
 // Lắng nghe phản hồi từ server
 socket.on("start_game", (data) => {
     mySymbol = data.symbol;
-    info.innerText = `Bạn là '${mySymbol}'. Bắt đầu chơi!`;
-    turnText.innerText = `Lượt: X`;
+    info.innerText = `You are '${mySymbol}'. Let's play!`;
+    turnText.innerText = `Turn: X`;
+    restartButton.style.display = "none";
     createBoard();
 });
 
 socket.on("room_full", () => {
-    alert("Phòng đã đầy! Vui lòng tải lại và nhập phòng khác.");
+    alert("Room is full! Please try a different room.");
     location.reload();
 });
 
@@ -65,10 +75,17 @@ socket.on("update_board", (data) => {
     const index = row * boardSize + col;
     const cell = boardDiv.children[index];
     cell.innerText = symbol;
+    cell.classList.add(symbol.toLowerCase()); // Thêm class x hoặc o để áp dụng màu
     currentTurn = symbol === "X" ? "O" : "X";
-    turnText.innerText = `Lượt: ${currentTurn}`;
+    turnText.innerText = `Turn: ${currentTurn}`;
 });
 
 socket.on("game_over", (data) => {
-    alert(`🎉 Người chơi '${data.winner}' đã thắng!`);
+    info.innerText = `🎉 Player '${data.winner}' wins!`;
+    turnText.innerText = "";
+    restartButton.style.display = "block";
+    // Vô hiệu hóa bàn cờ
+    for (let cell of boardDiv.children) {
+        cell.onclick = null;
+    }
 });

@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import uuid
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
@@ -10,7 +9,11 @@ socketio = SocketIO(app)
 rooms = {}
 
 @app.route('/')
-def index():
+def home():
+    return render_template('home.html')
+
+@app.route('/game')
+def game():
     return render_template('index.html')
 
 def check_win(board, row, col, symbol):
@@ -18,24 +21,20 @@ def check_win(board, row, col, symbol):
 
     for dr, dc in directions:
         count = 1
-
         # Check phía trước
         r, c = row - dr, col - dc
         while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == symbol:
             count += 1
             r -= dr
             c -= dc
-
         # Check phía sau
         r, c = row + dr, col + dc
         while 0 <= r < 15 and 0 <= c < 15 and board[r][c] == symbol:
             count += 1
             r += dr
             c += dc
-
         if count >= 5:
             return True
-
     return False
 
 @socketio.on('join_game')
@@ -73,5 +72,3 @@ def on_move(data):
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
-
-
