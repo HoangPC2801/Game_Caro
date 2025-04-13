@@ -83,6 +83,18 @@ function saveSettings() {
     closeSettings();
 }
 
+// Trigger confetti animation
+function triggerConfetti() {
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71'],
+        disableForReducedMotion: true,
+    });
+    setTimeout(() => confetti.reset(), 3000); // Clear after 3s
+}
+
 // Khởi tạo bàn cờ
 function createBoard() {
     boardDiv.innerHTML = "";
@@ -312,6 +324,7 @@ socket.on("game_over", (data) => {
     setTimeout(() => {
         infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     }, 1000);
+    triggerConfetti(); // Trigger confetti on game over
     turnText.innerText = "";
     timerContainer.style.display = "none";
     pauseButton.style.display = "none";

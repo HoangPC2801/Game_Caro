@@ -449,17 +449,6 @@ h1 {
     width: fit-content;
 }
 
-/* Board Styling */
-#board {
-    display: grid;
-    grid-template-columns: repeat(15, 40px);
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    width: fit-content;
-}
-
 .cell {
     width: 40px;
     height: 40px;
