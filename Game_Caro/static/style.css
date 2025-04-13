@@ -151,3 +151,67 @@ h1 {
         font-size: 1.4rem;
     }
 }
+
+/* Mode Container Styling */
+.mode-container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-top: 20px;
+    max-width: 500px;
+    width: 90%;
+}
+
+.mode-container h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+.mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mode-buttons button {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.mode-buttons button:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.mode-buttons button:nth-child(2) {
+    background: #e67e22;
+}
+
+.mode-buttons button:nth-child(2):hover {
+    background: #d35400;
+}
+
+/* Responsive Design for Mode Container */
+@media (max-width: 600px) {
+    .mode-container {
+        padding: 20px;
+    }
+
+    .mode-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .mode-buttons button {
+        font-size: 1rem;
+        padding: 10px;
+    }
+}
