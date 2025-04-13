@@ -18,14 +18,16 @@ def start_timer(room, current_symbol):
     """Start a 30-second timer for the current player's turn."""
     if room not in rooms:
         return
+    if 'paused' not in rooms[room]:
+        rooms[room]['paused'] = False
     rooms[room]['timer'] = time.time() + 30  # Set end time
-    while room in rooms and rooms[room]['timer'] and time.time() < rooms[room]['timer']:
-        remaining = int(rooms[room]['timer'] - time.time())
+    while room in rooms and rooms[room]['timer'] and time.time() < rooms[room]['timer'] and not rooms[room]['paused']:
+        remaining = rooms[room]['timer'] - time.time()
         if remaining < 0:
             break
         socketio.emit('timer_update', {'remaining': remaining, 'symbol': current_symbol}, room=room)
-        socketio.sleep(1)
-    if room in rooms and rooms[room]['timer'] and time.time() >= rooms[room]['timer']:
+        socketio.sleep(0.1)  # Faster updates for smoother progress bar
+    if room in rooms and rooms[room]['timer'] and time.time() >= rooms[room]['timer'] and not rooms[room]['paused']:
         winner = "O" if current_symbol == "X" else "X"
         socketio.emit('game_over', {'winner': winner, 'winning_cells': [], 'reason': 'timeout'}, room=room)
         rooms[room]['timer'] = None
@@ -211,14 +213,13 @@ def on_join(data):
     room = data.get('room')
     join_room(room)
     if room not in rooms:
-        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None}
+        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False}
         emit('room_created', {'room': room}, room=sid)
     else:
         if len(rooms[room]['players']) < 2:
             rooms[room]['players'].append(sid)
             emit('start_game', {'symbol': 'O'}, room=sid)
             emit('start_game', {'symbol': 'X'}, room=rooms[room]['players'][0])
-            # Start timer for X's turn
             socketio.start_background_task(start_timer, room, 'X')
         else:
             emit('room_full', {}, room=sid)
@@ -231,18 +232,36 @@ def on_move(data):
     symbol = data['symbol']
     if room in rooms:
         board = rooms[room]['board']
-        if board[row][col] == "":
+        if board[row][col] == "" and not rooms[room]['paused']:
             board[row][col] = symbol
             emit("update_board", {'row': row, 'col': col, 'symbol': symbol}, room=room)
             is_win, winning_cells = check_win(board, row, col, symbol)
             if is_win:
                 emit("game_over", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'}, room=room)
                 rooms[room]['timer'] = None
+                rooms[room]['paused'] = False
             else:
-                # Reset timer for the next player's turn
                 next_symbol = 'O' if symbol == 'X' else 'X'
-                rooms[room]['timer'] = None  # Clear previous timer
+                rooms[room]['timer'] = None
                 socketio.start_background_task(start_timer, room, next_symbol)
+
+@socketio.on('pause_game')
+def on_pause(data):
+    room = data['room']
+    if room in rooms and not rooms[room]['paused']:
+        rooms[room]['paused'] = True
+        remaining = rooms[room]['timer'] - time.time() if rooms[room]['timer'] else 0
+        rooms[room]['timer'] = remaining  # Store remaining time
+        emit('game_paused', {'remaining': remaining}, room=room)
+
+@socketio.on('resume_game')
+def on_resume(data):
+    room = data['room']
+    if room in rooms and rooms[room]['paused']:
+        rooms[room]['paused'] = False
+        current_symbol = rooms[room]['turn']
+        rooms[room]['timer'] = time.time() + rooms[room]['timer']  # Resume from stored time
+        socketio.start_background_task(start_timer, room, current_symbol)
 
 @socketio.on('make_move_ai')
 def on_move_ai(data):
@@ -258,7 +277,6 @@ def on_move_ai(data):
         if is_win:
             emit("game_over_ai", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'})
             return
-        # AI's turn
         ai_move = mcts(board, (row, col), time_limit=0.8)
         if ai_move:
             ai_row, ai_col = ai_move

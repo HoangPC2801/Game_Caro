@@ -8,7 +8,9 @@ const boardSize = 15;
 const boardDiv = document.getElementById("board");
 const info = document.getElementById("info");
 const turnText = document.getElementById("turn");
-const timerText = document.getElementById("timer");
+const timerContainer = document.getElementById("timer");
+const progressBar = document.getElementById("progress-bar");
+const pauseButton = document.getElementById("pause-button");
 const restartButton = document.getElementById("restart-button");
 const loadingSpinner = document.getElementById("loading");
 
@@ -61,9 +63,23 @@ function joinRoom() {
 function restartGame() {
     socket.emit("join_game", { room: currentRoom });
     restartButton.style.display = "none";
+    pauseButton.style.display = "none";
     info.innerText = "Waiting for another player...";
     loadingSpinner.style.display = "block";
+    timerContainer.style.display = "none";
     createBoard();
+}
+
+// Tạm dừng/tiếp tục game
+function togglePause() {
+    if (pauseButton.innerText === "Pause") {
+        socket.emit("pause_game", { room: currentRoom });
+        pauseButton.innerText = "Resume";
+    } else {
+        socket.emit("resume_game", { room: currentRoom });
+        pauseButton.innerText = "Pause";
+    }
+    clickSound.play();
 }
 
 // Lắng nghe phản hồi từ server
@@ -71,7 +87,10 @@ socket.on("start_game", (data) => {
     mySymbol = data.symbol;
     info.innerText = `You are '${mySymbol}'. Let's play!`;
     turnText.innerText = `Turn: X`;
-    timerText.innerText = `Time: 30s`;
+    timerContainer.style.display = "block";
+    progressBar.style.width = "100%";
+    pauseButton.style.display = "block";
+    pauseButton.innerText = "Pause";
     restartButton.style.display = "none";
     loadingSpinner.style.display = "none";
     createBoard();
@@ -93,11 +112,20 @@ socket.on("update_board", (data) => {
     currentTurn = symbol === "X" ? "O" : "X";
     turnText.innerText = `Turn: ${currentTurn}`;
     loadingSpinner.style.display = "none";
+    progressBar.style.width = "100%"; // Reset progress bar
     moveSound.play();
 });
 
 socket.on("timer_update", (data) => {
-    timerText.innerText = `Time: ${data.remaining}s`;
+    const percentage = (data.remaining / 30) * 100;
+    progressBar.style.width = `${percentage}%`;
+});
+
+socket.on("game_paused", (data) => {
+    pauseButton.innerText = "Resume";
+    info.innerText = "Game paused";
+    const percentage = (data.remaining / 30) * 100;
+    progressBar.style.width = `${percentage}%`;
 });
 
 socket.on("game_over", (data) => {
@@ -106,7 +134,6 @@ socket.on("game_over", (data) => {
         message = `🎉 Player '${data.winner}' wins due to timeout!`;
     } else {
         message = `🎉 Player '${data.winner}' wins!`;
-        // Highlight winning line
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
@@ -117,11 +144,11 @@ socket.on("game_over", (data) => {
     }
     info.innerText = message;
     turnText.innerText = "";
-    timerText.innerText = "";
+    timerContainer.style.display = "none";
+    pauseButton.style.display = "none";
     restartButton.style.display = "block";
     loadingSpinner.style.display = "none";
     winSound.play();
-    // Disable board
     for (let cell of boardDiv.children) {
         cell.onclick = null;
     }

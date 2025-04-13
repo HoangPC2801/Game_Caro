@@ -12,7 +12,9 @@
     <button class="back-button" onclick="window.location.href='/'">Back to Home</button>
     <p id="info">You are 'X'. Start playing!</p>
     <p id="turn">Turn: X</p>
-    <p id="timer"></p>
+    <div id="timer" class="progress-container">
+        <div id="progress-bar" class="progress-bar"></div>
+    </div>
     <button id="restart-button" style="display: none;" onclick="restartGame()">Restart Game</button>
     <div id="board"></div>
     <div id="loading" class="loading-spinner" style="display: none;">Loading...</div>

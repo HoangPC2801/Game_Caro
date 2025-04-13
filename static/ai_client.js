@@ -7,7 +7,8 @@ const boardSize = 15;
 const boardDiv = document.getElementById("board");
 const info = document.getElementById("info");
 const turnText = document.getElementById("turn");
-const timerText = document.getElementById("timer");
+const timerContainer = document.getElementById("timer");
+const progressBar = document.getElementById("progress-bar");
 const restartButton = document.getElementById("restart-button");
 const loadingSpinner = document.getElementById("loading");
 
@@ -20,15 +21,16 @@ let timerInterval = null;
 function startTimer() {
     clearTimer();
     let timeLeft = 30;
-    timerText.innerText = `Time: ${timeLeft}s`;
+    progressBar.style.width = "100%";
     timerInterval = setInterval(() => {
-        timeLeft--;
-        timerText.innerText = `Time: ${timeLeft}s`;
+        timeLeft -= 0.1; // Update every 100ms for smooth animation
+        const percentage = (timeLeft / 30) * 100;
+        progressBar.style.width = `${percentage}%`;
         if (timeLeft <= 0) {
             clearTimer();
             socket.emit("timeout_ai");
         }
-    }, 1000);
+    }, 100);
 }
 
 function clearTimer() {
@@ -71,7 +73,7 @@ function restartGame() {
     restartButton.style.display = "none";
     info.innerText = "You are 'X'. Start playing!";
     turnText.innerText = "Turn: X";
-    timerText.innerText = "Time: 30s";
+    timerContainer.style.display = "block";
     currentTurn = "X";
     createBoard();
     startTimer();
@@ -85,7 +87,6 @@ startTimer();
 socket.on("update_board_ai", (data) => {
     const { row, col, symbol } = data;
     if (row === -1 && col === -1) {
-        // Reset board
         createBoard();
         startTimer();
         return;
@@ -111,7 +112,6 @@ socket.on("game_over_ai", (data) => {
         message = "🤖 AI wins due to timeout!";
     } else {
         message = data.winner === mySymbol ? "🎉 You win!" : "🤖 AI wins!";
-        // Highlight winning line
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
@@ -122,11 +122,10 @@ socket.on("game_over_ai", (data) => {
     }
     info.innerText = message;
     turnText.innerText = "";
-    timerText.innerText = "";
+    timerContainer.style.display = "none";
     restartButton.style.display = "block";
     loadingSpinner.style.display = "none";
     winSound.play();
-    // Disable board
     for (let cell of boardDiv.children) {
         cell.onclick = null;
     }
@@ -136,11 +135,10 @@ socket.on("timeout_ai", () => {
     clearTimer();
     info.innerText = "🤖 AI wins due to timeout!";
     turnText.innerText = "";
-    timerText.innerText = "";
+    timerContainer.style.display = "none";
     restartButton.style.display = "block";
     loadingSpinner.style.display = "none";
     winSound.play();
-    // Disable board
     for (let cell of boardDiv.children) {
         cell.onclick = null;
     }
