@@ -7,12 +7,16 @@ const boardSize = 15;
 
 const boardDiv = document.getElementById("board");
 const info = document.getElementById("info");
+const infoContainer = document.getElementById("info-container");
+const infoContent = document.getElementById("info-content");
+const infoToggle = document.getElementById("info-toggle");
 const turnText = document.getElementById("turn");
 const timerContainer = document.getElementById("timer");
 const progressBar = document.getElementById("progress-bar");
 const pauseButton = document.getElementById("pause-button");
 const restartButton = document.getElementById("restart-button");
 const backButton = document.getElementById("back-button");
+const settingsButton = document.getElementById("settings-button");
 const loadingSpinner = document.getElementById("loading");
 const gameControlsContainer = document.getElementById("game-controls-container");
 const gameControlsContent = document.getElementById("game-controls-content");
@@ -22,6 +26,11 @@ const chatContent = document.getElementById("chat-content");
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const chatToggle = document.getElementById("chat-toggle");
+const settingsModal = document.getElementById("settings-modal");
+const settingsClose = document.getElementById("settings-close");
+const settingsSave = document.getElementById("settings-save");
+const infoPosition = document.getElementById("info-position");
+const infoColor = document.getElementById("info-color");
 
 const clickSound = new Audio("/static/sounds/click.mp3");
 const moveSound = new Audio("/static/sounds/move.mp3");
@@ -29,6 +38,50 @@ const winSound = new Audio("/static/sounds/win.mp3");
 
 let isGameControlsOpen = true;
 let isChatOpen = true;
+let isInfoOpen = true;
+
+// Load settings from localStorage
+function loadSettings() {
+    const savedPosition = localStorage.getItem("infoPosition") || "left";
+    const savedColor = localStorage.getItem("infoColor") || "#ffffff";
+    infoPosition.value = savedPosition;
+    infoColor.value = savedColor;
+    applyInfoBoxSettings(savedPosition, savedColor);
+}
+
+// Apply info box settings
+function applyInfoBoxSettings(position, color) {
+    infoContainer.style.backgroundColor = color;
+    infoContainer.className = `info-container ${position}`;
+    localStorage.setItem("infoPosition", position);
+    localStorage.setItem("infoColor", color);
+}
+
+// Toggle info box
+function toggleInfo() {
+    isInfoOpen = !isInfoOpen;
+    infoToggle.innerText = isInfoOpen ? "−" : "+";
+    infoContent.style.display = isInfoOpen ? "block" : "none";
+    clickSound.play();
+}
+
+// Open settings modal
+function openSettings() {
+    settingsModal.style.display = "block";
+    clickSound.play();
+}
+
+// Close settings modal
+function closeSettings() {
+    settingsModal.style.display = "none";
+    clickSound.play();
+}
+
+// Save settings
+function saveSettings() {
+    applyInfoBoxSettings(infoPosition.value, infoColor.value);
+    closeSettings();
+}
 
 // Khởi tạo bàn cờ
 function createBoard() {
@@ -67,6 +120,7 @@ function joinRoom() {
     socket.emit("join_game", { room: roomCode });
     document.getElementById("room-container").style.display = "none";
     info.innerText = "Waiting for another player...";
+    infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     loadingSpinner.style.display = "block";
     clickSound.play();
 }
@@ -79,6 +133,7 @@ function restartGame() {
     gameControlsContainer.style.display = "none";
     chatContainer.style.display = "none";
     info.innerText = "Waiting for another player...";
+    infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     loadingSpinner.style.display = "block";
     timerContainer.style.display = "none";
     chatMessages.innerHTML = "";
@@ -88,6 +143,9 @@ function restartGame() {
     isChatOpen = true;
     chatToggle.innerText = "−";
     chatContent.style.display = "block";
+    isInfoOpen = true;
+    infoToggle.innerText = "−";
+    infoContent.style.display = "block";
     createBoard();
     clickSound.play();
 }
@@ -150,15 +208,29 @@ pauseButton.addEventListener("click", togglePause);
 
 restartButton.addEventListener("click", restartGame);
 
+settingsButton.addEventListener("click", openSettings);
+
+settingsClose.addEventListener("click", closeSettings);
+
+settingsSave.addEventListener("click", saveSettings);
+
+// Load settings on page load
+loadSettings();
+
 // Lắng nghe phản hồi từ server
 socket.on("start_game", (data) => {
     mySymbol = data.symbol;
     info.innerText = `You are '${mySymbol}'. Let's play!`;
+    infoContainer.style.backgroundColor = "#2ecc71"; // Green for start
+    setTimeout(() => {
+        infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
+    }, 1000);
     turnText.innerText = `Turn: X`;
     timerContainer.style.display = "block";
     progressBar.style.width = "100%";
     pauseButton.style.display = "block";
     backButton.style.display = "block";
+    settingsButton.style.display = "block";
     restartButton.style.display = "none";
     gameControlsContainer.style.display = "block";
     isGameControlsOpen = true;
@@ -168,6 +240,9 @@ socket.on("start_game", (data) => {
     isChatOpen = true;
     chatToggle.innerText = "−";
     chatContent.style.display = "block";
+    isInfoOpen = true;
+    infoToggle.innerText = "−";
+    infoContent.style.display = "block";
     loadingSpinner.style.display = "none";
     createBoard();
 });
@@ -200,6 +275,10 @@ socket.on("timer_update", (data) => {
 socket.on("game_paused", (data) => {
     pauseButton.innerText = "Resume";
     info.innerText = "Game paused";
+    infoContainer.style.backgroundColor = "#3498db"; // Blue for pause
+    setTimeout(() => {
+        infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
+    }, 1000);
     const percentage = (data.remaining / 30) * 100;
     progressBar.style.width = `${percentage}%`;
 });
@@ -217,9 +296,9 @@ socket.on("receive_message", (data) => {
 socket.on("game_over", (data) => {
     let message = "";
     if (data.reason === "timeout") {
-        message = `🎉 Player '${data.winner}' wins due to timeout!`;
+        message = data.winner === mySymbol ? `🎉 You win as '${mySymbol}' due to timeout!` : `🎉 Player '${data.winner}' wins due to timeout!`;
     } else {
-        message = `🎉 Player '${data.winner}' wins!`;
+        message = data.winner === mySymbol ? `🎉 You win as '${mySymbol}'!` : `🎉 Player '${data.winner}' wins!`;
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
@@ -229,10 +308,15 @@ socket.on("game_over", (data) => {
         }
     }
     info.innerText = message;
+    infoContainer.style.backgroundColor = "#f1c40f"; // Gold for victory
+    setTimeout(() => {
+        infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
+    }, 1000);
     turnText.innerText = "";
     timerContainer.style.display = "none";
     pauseButton.style.display = "none";
     backButton.style.display = "block";
+    settingsButton.style.display = "block";
     restartButton.style.display = "block";
     gameControlsContainer.style.display = "block";
     chatContainer.style.display = "none";

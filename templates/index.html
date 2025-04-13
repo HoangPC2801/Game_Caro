@@ -13,8 +13,18 @@
         <input type="text" id="room-input" placeholder="Enter room code..." aria-label="Room code input">
         <button onclick="joinRoom()">Join Room</button>
     </div>
-    <p id="info">Welcome! Enter a room code to start.</p>
-    <div id="board"></div>
+    <div id="game-area">
+        <div id="info-container">
+            <div id="info-header">
+                <span>Info</span>
+                <button id="info-toggle" onclick="toggleInfo()">−</button>
+            </div>
+            <div id="info-content">
+                <p id="info">Welcome! Enter a room code to start.</p>
+            </div>
+        </div>
+        <div id="board"></div>
+    </div>
     <div id="game-controls-container">
         <div id="game-controls-header">
             <span>Game Controls</span>
@@ -28,6 +38,7 @@
             <button id="back-button">Back to Home</button>
             <button id="pause-button">Pause</button>
             <button id="restart-button">Restart Game</button>
+            <button id="settings-button">Settings</button>
         </div>
     </div>
     <div id="chat-container">
@@ -41,6 +52,22 @@
                 <input type="text" id="chat-input" placeholder="Type a message..." aria-label="Chat message input">
                 <button onclick="sendMessage()">Send</button>
             </div>
+        </div>
+    </div>
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span id="settings-close" class="close">&times;</span>
+            <h2>Info Box Settings</h2>
+            <label for="info-position">Position:</label>
+            <select id="info-position">
+                <option value="left">Left of Board</option>
+                <option value="right">Right of Board</option>
+                <option value="top">Top of Board</option>
+                <option value="bottom">Bottom of Board</option>
+            </select>
+            <label for="info-color">Background Color:</label>
+            <input type="color" id="info-color">
+            <button id="settings-save">Save</button>
         </div>
     </div>
     <div id="loading" class="loading-spinner" style="display: none;">Loading...</div>
