@@ -18,14 +18,14 @@
     </div>
 
     <script>
+        const clickSound = new Audio("/static/sounds/click.mp3");
         function goToHumanMode() {
+            clickSound.play();
             window.location.href = "/game";
         }
-
         function goToAIMode() {
-            // Placeholder for AI mode
-            alert("AI Mode is coming soon!");
-            // Future implementation: window.location.href = "/ai-game";
+            clickSound.play();
+            window.location.href = "/ai-game";
         }
     </script>
 </body>

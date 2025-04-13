@@ -26,6 +26,24 @@ h1 {
     gap: 10px;
 }
 
+/* Back Button */
+.back-button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
 /* Room Container Styling */
 #room-container {
     background: #ffffff;
@@ -126,30 +144,17 @@ h1 {
     100% { transform: scale(1); }
 }
 
-/* Responsive Design */
-@media (max-width: 600px) {
-    h1 {
-        font-size: 1.8rem;
-    }
+/* Loading Spinner */
+.loading-spinner {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-top: 10px;
+    animation: spin 1s linear infinite;
+}
 
-    #room-container {
-        flex-direction: column;
-        width: 90%;
-    }
-
-    #room-input, #room-container button {
-        width: 100%;
-    }
-
-    #board {
-        grid-template-columns: repeat(15, 30px);
-    }
-
-    .cell {
-        width: 30px;
-        height: 30px;
-        font-size: 1.4rem;
-    }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Mode Container Styling */
@@ -200,8 +205,31 @@ h1 {
     background: #d35400;
 }
 
-/* Responsive Design for Mode Container */
+/* Responsive Design */
 @media (max-width: 600px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    #room-container {
+        flex-direction: column;
+        width: 90%;
+    }
+
+    #room-input, #room-container button {
+        width: 100%;
+    }
+
+    #board {
+        grid-template-columns: repeat(15, 30px);
+    }
+
+    .cell {
+        width: 30px;
+        height: 30px;
+        font-size: 1.4rem;
+    }
+
     .mode-container {
         padding: 20px;
     }

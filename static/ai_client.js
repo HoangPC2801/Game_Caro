@@ -1,6 +1,5 @@
 const socket = io();
-let currentRoom = null;
-let mySymbol = "";
+let mySymbol = "X";
 let currentTurn = "X";
 const board = [];
 const boardSize = 15;
@@ -32,56 +31,30 @@ function createBoard() {
     }
 }
 
-// Gửi nước đi
+// Gửi nước đi của người chơi
 function makeMove(row, col, cell) {
     if (board[row][col] === "" && currentTurn === mySymbol) {
-        socket.emit("make_move", { row, col, room: currentRoom, symbol: mySymbol });
+        socket.emit("make_move_ai", { row, col, symbol: mySymbol });
         loadingSpinner.style.display = "block";
         moveSound.play();
     }
 }
 
-// Hàm khi người dùng bấm "Vào phòng"
-function joinRoom() {
-    const roomCode = document.getElementById("room-input").value.trim();
-    if (roomCode === "") {
-        alert("Please enter a room code!");
-        return;
-    }
-    currentRoom = roomCode;
-    socket.emit("join_game", { room: roomCode });
-    document.getElementById("room-container").style.display = "none";
-    info.innerText = "Waiting for another player...";
-    loadingSpinner.style.display = "block";
-    clickSound.play();
-}
-
 // Khởi động lại game
 function restartGame() {
-    socket.emit("join_game", { room: currentRoom });
+    socket.emit("restart_ai_game");
     restartButton.style.display = "none";
-    info.innerText = "Waiting for another player...";
-    loadingSpinner.style.display = "block";
+    info.innerText = "You are 'X'. Start playing!";
+    turnText.innerText = "Turn: X";
+    currentTurn = "X";
     createBoard();
 }
 
+// Khởi tạo bàn cờ khi tải trang
+createBoard();
+
 // Lắng nghe phản hồi từ server
-socket.on("start_game", (data) => {
-    mySymbol = data.symbol;
-    info.innerText = `You are '${mySymbol}'. Let's play!`;
-    turnText.innerText = `Turn: X`;
-    restartButton.style.display = "none";
-    loadingSpinner.style.display = "none";
-    createBoard();
-});
-
-socket.on("room_full", () => {
-    alert("Room is full! Please try a different room.");
-    loadingSpinner.style.display = "none";
-    location.reload();
-});
-
-socket.on("update_board", (data) => {
+socket.on("update_board_ai", (data) => {
     const { row, col, symbol } = data;
     board[row][col] = symbol;
     const index = row * boardSize + col;
@@ -94,11 +67,11 @@ socket.on("update_board", (data) => {
     moveSound.play();
 });
 
-socket.on("game_over", (data) => {
-    info.innerText = `🎉 Player '${data.winner}' wins!`;
+socket.on("game_over_ai", (data) => {
+    loadingSpinner.style.display = "none";
+    info.innerText = data.winner === mySymbol ? "🎉 You win!" : "🤖 AI wins!";
     turnText.innerText = "";
     restartButton.style.display = "block";
-    loadingSpinner.style.display = "none";
     winSound.play();
     // Vô hiệu hóa bàn cờ
     for (let cell of boardDiv.children) {
