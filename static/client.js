@@ -92,7 +92,7 @@ function triggerConfetti() {
         colors: ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71'],
         disableForReducedMotion: true,
     });
-    setTimeout(() => confetti.reset(), 3000); // Clear after 3s
+    setTimeout(() => confetti.reset(), 3000);
 }
 
 // Khởi tạo bàn cờ
@@ -272,6 +272,13 @@ socket.on("update_board", (data) => {
     const cell = boardDiv.children[index];
     cell.innerText = symbol;
     cell.classList.add(symbol.toLowerCase());
+    
+    // Highlight the latest move
+    document.querySelectorAll('.cell.latest-move').forEach(oldCell => {
+        oldCell.classList.remove('latest-move');
+    });
+    cell.classList.add('latest-move');
+
     currentTurn = symbol === "X" ? "O" : "X";
     turnText.innerText = `Turn: ${currentTurn}`;
     loadingSpinner.style.display = "none";
@@ -315,6 +322,7 @@ socket.on("game_over", (data) => {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
                 const cell = boardDiv.children[index];
+                cell.classList.remove('latest-move'); // Clear latest move highlight
                 cell.classList.add("winning");
             });
         }
@@ -324,7 +332,7 @@ socket.on("game_over", (data) => {
     setTimeout(() => {
         infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     }, 1000);
-    triggerConfetti(); // Trigger confetti on game over
+    triggerConfetti();
     turnText.innerText = "";
     timerContainer.style.display = "none";
     pauseButton.style.display = "none";
