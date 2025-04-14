@@ -272,13 +272,10 @@ socket.on("update_board", (data) => {
     const cell = boardDiv.children[index];
     cell.innerText = symbol;
     cell.classList.add(symbol.toLowerCase());
-    
-    // Highlight the latest move
     document.querySelectorAll('.cell.latest-move').forEach(oldCell => {
         oldCell.classList.remove('latest-move');
     });
     cell.classList.add('latest-move');
-
     currentTurn = symbol === "X" ? "O" : "X";
     turnText.innerText = `Turn: ${currentTurn}`;
     loadingSpinner.style.display = "none";
@@ -316,19 +313,21 @@ socket.on("game_over", (data) => {
     let message = "";
     if (data.reason === "timeout") {
         message = data.winner === mySymbol ? `🎉 You win as '${mySymbol}' due to timeout!` : `🎉 Player '${data.winner}' wins due to timeout!`;
-    } else {
+    } else if (data.reason === "win") {
         message = data.winner === mySymbol ? `🎉 You win as '${mySymbol}'!` : `🎉 Player '${data.winner}' wins!`;
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
                 const cell = boardDiv.children[index];
-                cell.classList.remove('latest-move'); // Clear latest move highlight
+                cell.classList.remove('latest-move');
                 cell.classList.add("winning");
             });
         }
+    } else if (data.reason === "draw") {
+        message = "🎉 Game is a draw!";
     }
     info.innerText = message;
-    infoContainer.style.backgroundColor = "#f1c40f"; // Gold for victory
+    infoContainer.style.backgroundColor = "#f1c40f"; // Gold for game over
     setTimeout(() => {
         infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     }, 1000);

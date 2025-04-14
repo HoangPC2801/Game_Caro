@@ -65,6 +65,14 @@ def check_win(board, row, col, symbol):
             return True, winning_cells[:5]
     return False, []
 
+def is_board_full(board):
+    """Check if the board is completely filled."""
+    for row in board:
+        for cell in row:
+            if cell == "":
+                return False
+    return True
+
 def get_valid_moves(board, last_move=None):
     moves = []
     if last_move:
@@ -173,7 +181,7 @@ class MCTSNode:
                     best_move = move
             if random.random() < 0.2:
                 best_move = random.choice(moves)
-            temp_board[best_move[0]][move[1]] = current_symbol
+            temp_board[best_move[0]][best_move[1]] = current_symbol
             if check_win(temp_board, best_move[0], best_move[1], current_symbol)[0]:
                 return 1 if current_symbol == "O" else -1
             last_move = best_move
@@ -241,6 +249,10 @@ def on_move(data):
                 emit("game_over", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'}, room=room)
                 rooms[room]['timer'] = None
                 rooms[room]['paused'] = False
+            elif is_board_full(board):
+                emit("game_over", {'winner': None, 'winning_cells': [], 'reason': 'draw'}, room=room)
+                rooms[room]['timer'] = None
+                rooms[room]['paused'] = False
             else:
                 next_symbol = 'O' if symbol == 'X' else 'X'
                 rooms[room]['timer'] = None
@@ -286,6 +298,9 @@ def on_move_ai(data):
         if is_win:
             emit("game_over_ai", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'})
             return
+        if is_board_full(board):
+            emit("game_over_ai", {'winner': None, 'winning_cells': [], 'reason': 'draw'})
+            return
         ai_move = mcts(board, (row, col), time_limit=0.8)
         if ai_move:
             ai_row, ai_col = ai_move
@@ -294,6 +309,8 @@ def on_move_ai(data):
             is_win, winning_cells = check_win(board, ai_row, ai_col, "O")
             if is_win:
                 emit("game_over_ai", {'winner': "O", 'winning_cells': winning_cells, 'reason': 'win'})
+            elif is_board_full(board):
+                emit("game_over_ai", {'winner': None, 'winning_cells': [], 'reason': 'draw'})
 
 @socketio.on('restart_ai_game')
 def on_restart_ai():
