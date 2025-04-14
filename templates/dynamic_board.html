@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caro Game - Chế độ bàn cờ động</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dynamic_board.css') }}">
+</head>
+<body>
+    <div class="dynamic-board-container">
+        <h1>Chế độ bàn cờ động</h1>
+        <div class="info-box">
+            <h2>Đang trong quá trình phát triển</h2>
+            <p>Hướng dẫn cho chế độ này:</p>
+            <ul>
+                <li><strong>Sau mỗi 3 lượt:</strong> Một hàng hoặc cột ngẫu nhiên sẽ bị dịch chuyển (xoay hoặc trượt), thay đổi vị trí các ký hiệu trên bàn cờ.</li>
+                <li><strong>Ô biến mất hoặc bị khóa:</strong> Một số ô sẽ biến mất hoặc bị khóa tạm thời, buộc người chơi phải điều chỉnh chiến thuật để thích nghi.</li>
+            </ul>
+            <button onclick="window.location.href='/'">Quay lại</button>
+        </div>
+    </div>
+</body>
+</html>

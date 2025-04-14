@@ -48,6 +48,14 @@ def ai_game():
 def special_mode():
     return render_template('special_mode.html')
 
+@app.route('/dynamic-board')
+def dynamic_board():
+    return render_template('dynamic_board.html')
+
+@app.route('/multiplayer')
+def multiplayer():
+    return render_template('multiplayer.html')
+
 def check_win(board, row, col, symbol):
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
     for dr, dc in directions:
