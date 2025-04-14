@@ -331,6 +331,7 @@ h1 {
 
 #chat-input-container {
     display: flex;
+    flex-direction: column; /* Thay đổi hướng từ ngang -> dọc */
     padding: 10px;
     gap: 10px;
 }

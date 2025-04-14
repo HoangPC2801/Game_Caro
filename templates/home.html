@@ -3,30 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Caro Online - Home</title>
+    <title>Caro Game - Choose Mode</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1><span>🎮</span> Caro Online</h1>
+    <h1>Caro Game</h1>
     <div class="mode-container">
-        <h2>Choose Your Mode</h2>
+        <h2>Chọn chế độ chơi</h2>
         <div class="mode-buttons">
-            <button onclick="goToHumanMode()">Play with Friend</button>
-            <button onclick="goToAIMode()">Play with AI</button>
+            <button onclick="window.location.href='/game'">Chơi với bạn</button>
+            <button onclick="window.location.href='/ai-game'">Chơi với AI</button>
+            <button onclick="window.location.href='/special-mode'">Chế độ kỹ năng đặc biệt</button>
         </div>
     </div>
-
-    <script>
-        const clickSound = new Audio("/static/sounds/click.mp3");
-        function goToHumanMode() {
-            clickSound.play();
-            window.location.href = "/game";
-        }
-        function goToAIMode() {
-            clickSound.play();
-            window.location.href = "/ai-game";
-        }
-    </script>
 </body>
 </html>

@@ -44,6 +44,10 @@ def game():
 def ai_game():
     return render_template('ai_game.html')
 
+@app.route('/special-mode')
+def special_mode():
+    return render_template('special_mode.html')
+
 def check_win(board, row, col, symbol):
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
     for dr, dc in directions:
