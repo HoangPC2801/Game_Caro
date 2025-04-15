@@ -56,6 +56,10 @@ def dynamic_board():
 def multiplayer():
     return render_template('multiplayer.html')
 
+@app.route('/customize-skin')
+def customize_skin():
+    return render_template('customize_skin.html')
+
 def check_win(board, row, col, symbol):
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
     for dr, dc in directions:
