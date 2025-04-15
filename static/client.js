@@ -40,7 +40,7 @@ let isGameControlsOpen = true;
 let isChatOpen = true;
 let isInfoOpen = true;
 
-// Load settings from localStorage
+// Tải cài đặt từ localStorage
 function loadSettings() {
     const savedPosition = localStorage.getItem("infoPosition") || "left";
     const savedColor = localStorage.getItem("infoColor") || "#ffffff";
@@ -49,7 +49,7 @@ function loadSettings() {
     applyInfoBoxSettings(savedPosition, savedColor);
 }
 
-// Apply info box settings
+// Áp dụng cài đặt hộp thông tin
 function applyInfoBoxSettings(position, color) {
     infoContainer.style.backgroundColor = color;
     infoContainer.className = `info-container ${position}`;
@@ -57,7 +57,7 @@ function applyInfoBoxSettings(position, color) {
     localStorage.setItem("infoColor", color);
 }
 
-// Toggle info box
+// Chuyển đổi hộp thông tin
 function toggleInfo() {
     isInfoOpen = !isInfoOpen;
     infoToggle.innerText = isInfoOpen ? "−" : "+";
@@ -65,25 +65,25 @@ function toggleInfo() {
     clickSound.play();
 }
 
-// Open settings modal
+// Mở modal cài đặt
 function openSettings() {
     settingsModal.style.display = "block";
     clickSound.play();
 }
 
-// Close settings modal
+// Đóng modal cài đặt
 function closeSettings() {
     settingsModal.style.display = "none";
     clickSound.play();
 }
 
-// Save settings
+// Lưu cài đặt
 function saveSettings() {
     applyInfoBoxSettings(infoPosition.value, infoColor.value);
     closeSettings();
 }
 
-// Trigger confetti animation
+// Kích hoạt hiệu ứng confetti
 function triggerConfetti() {
     confetti({
         particleCount: 100,
@@ -125,13 +125,13 @@ function makeMove(row, col, cell) {
 function joinRoom() {
     const roomCode = document.getElementById("room-input").value.trim();
     if (roomCode === "") {
-        alert("Please enter a room code!");
+        alert("Vui lòng nhập mã phòng!");
         return;
     }
     currentRoom = roomCode;
     socket.emit("join_game", { room: roomCode });
     document.getElementById("room-container").style.display = "none";
-    info.innerText = "Waiting for another player...";
+    info.innerText = "Đang chờ người chơi khác...";
     infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     loadingSpinner.style.display = "block";
     clickSound.play();
@@ -144,7 +144,7 @@ function restartGame() {
     pauseButton.style.display = "none";
     gameControlsContainer.style.display = "none";
     chatContainer.style.display = "none";
-    info.innerText = "Waiting for another player...";
+    info.innerText = "Đang chờ người chơi khác...";
     infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     loadingSpinner.style.display = "block";
     timerContainer.style.display = "none";
@@ -164,15 +164,16 @@ function restartGame() {
 
 // Tạm dừng/tiếp tục game
 function togglePause() {
-    if (pauseButton.innerText === "Pause") {
+    if (pauseButton.innerText === "Tạm dừng") {
         socket.emit("pause_game", { room: currentRoom });
-        pauseButton.innerText = "Resume";
+        pauseButton.innerText = "Tiếp tục";
     } else {
         socket.emit("resume_game", { room: currentRoom });
-        pauseButton.innerText = "Pause";
+        pauseButton.innerText = "Tạm dừng";
     }
     clickSound.play();
 }
+
 
 // Bật/tắt cửa sổ điều khiển game
 function toggleGameControls() {
@@ -232,12 +233,12 @@ loadSettings();
 // Lắng nghe phản hồi từ server
 socket.on("start_game", (data) => {
     mySymbol = data.symbol;
-    info.innerText = `You are '${mySymbol}'. Let's play!`;
-    infoContainer.style.backgroundColor = "#2ecc71"; // Green for start
+    info.innerText = `Bạn là '${mySymbol}'. Chơi nào!`;
+    infoContainer.style.backgroundColor = "#2ecc71"; // Màu xanh cho bắt đầu
     setTimeout(() => {
         infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     }, 1000);
-    turnText.innerText = `Turn: X`;
+    turnText.innerText = `Lượt: X`;
     timerContainer.style.display = "block";
     progressBar.style.width = "100%";
     pauseButton.style.display = "block";
@@ -260,7 +261,7 @@ socket.on("start_game", (data) => {
 });
 
 socket.on("room_full", () => {
-    alert("Room is full! Please try a different room.");
+    alert("Phòng đã đầy! Hãy thử phòng khác.");
     loadingSpinner.style.display = "none";
     location.reload();
 });
@@ -277,7 +278,7 @@ socket.on("update_board", (data) => {
     });
     cell.classList.add('latest-move');
     currentTurn = symbol === "X" ? "O" : "X";
-    turnText.innerText = `Turn: ${currentTurn}`;
+    turnText.innerText = `Lượt: ${currentTurn}`;
     loadingSpinner.style.display = "none";
     progressBar.style.width = "100%";
     moveSound.play();
@@ -288,10 +289,11 @@ socket.on("timer_update", (data) => {
     progressBar.style.width = `${percentage}%`;
 });
 
+
 socket.on("game_paused", (data) => {
-    pauseButton.innerText = "Resume";
-    info.innerText = "Game paused";
-    infoContainer.style.backgroundColor = "#3498db"; // Blue for pause
+    pauseButton.innerText = "Tiếp tục";
+    info.innerText = "Trò chơi đã tạm dừng";
+    infoContainer.style.backgroundColor = "#3498db"; // Màu xanh cho tạm dừng
     setTimeout(() => {
         infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     }, 1000);
@@ -312,9 +314,9 @@ socket.on("receive_message", (data) => {
 socket.on("game_over", (data) => {
     let message = "";
     if (data.reason === "timeout") {
-        message = data.winner === mySymbol ? `🎉 You win as '${mySymbol}' due to timeout!` : `🎉 Player '${data.winner}' wins due to timeout!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol}' vì hết giờ!` : `🎉 Người chơi '${data.winner}' thắng vì hết giờ!`;
     } else if (data.reason === "win") {
-        message = data.winner === mySymbol ? `🎉 You win as '${mySymbol}'!` : `🎉 Player '${data.winner}' wins!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol}'!` : `🎉 Người chơi '${data.winner}' thắng!`;
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
@@ -324,10 +326,10 @@ socket.on("game_over", (data) => {
             });
         }
     } else if (data.reason === "draw") {
-        message = "🎉 Game is a draw!";
+        message = "🎉 Trò chơi kết thúc hòa!";
     }
     info.innerText = message;
-    infoContainer.style.backgroundColor = "#f1c40f"; // Gold for game over
+    infoContainer.style.backgroundColor = "#f1c40f"; // Màu vàng cho kết thúc trò chơi
     setTimeout(() => {
         infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     }, 1000);

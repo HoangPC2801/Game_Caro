@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,24 +10,24 @@
 <body>
     <h1><span>🎮</span> Caro Online</h1>
     <div id="room-container">
-        <input type="text" id="room-input" placeholder="Enter room code..." aria-label="Room code input">
-        <button onclick="joinRoom()">Join Room</button>
+        <input type="text" id="room-input" placeholder="Nhập mã phòng..." aria-label="Nhập mã phòng">
+        <button onclick="joinRoom()">Vào Phòng</button>
     </div>
     <div id="game-area">
         <div id="info-container">
             <div id="info-header">
-                <span>Info</span>
+                <span>Thông Tin</span>
                 <button id="info-toggle" onclick="toggleInfo()">−</button>
             </div>
             <div id="info-content">
-                <p id="info">Welcome! Enter a room code to start.</p>
+                <p id="info">Chào mừng! Nhập mã phòng để bắt đầu.</p>
             </div>
         </div>
         <div id="board"></div>
     </div>
     <div id="game-controls-container">
         <div id="game-controls-header">
-            <span>Game Controls</span>
+            <span>Điều Khiển Trò Chơi</span>
             <button id="game-controls-toggle" onclick="toggleGameControls()">−</button>
         </div>
         <div id="game-controls-content">
@@ -35,42 +35,42 @@
             <div id="timer" class="progress-container">
                 <div id="progress-bar" class="progress-bar"></div>
             </div>
-            <button id="back-button">Back to Home</button>
-            <button id="pause-button">Pause</button>
-            <button id="restart-button">Restart Game</button>
-            <button id="settings-button">Settings</button>
+            <button id="back-button">Quay lại Trang chủ</button>
+            <button id="pause-button">Tạm dừng</button>
+            <button id="restart-button">Chơi lại</button>
+            <button id="settings-button">Cài đặt</button>
         </div>
     </div>
     <div id="chat-container">
         <div id="chat-header">
-            <span>Chat</span>
+            <span>Trò chuyện</span>
             <button id="chat-toggle" onclick="toggleChat()">−</button>
         </div>
         <div id="chat-content">
             <div id="chat-messages"></div>
             <div id="chat-input-container">
-                <input type="text" id="chat-input" placeholder="Type a message..." aria-label="Chat message input">
-                <button onclick="sendMessage()">Send</button>
+                <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." aria-label="Nhập tin nhắn trò chuyện">
+                <button onclick="sendMessage()">Gửi</button>
             </div>
         </div>
     </div>
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <span id="settings-close" class="close">×</span>
-            <h2>Info Box Settings</h2>
-            <label for="info-position">Position:</label>
+            <h2>Cài Đặt Hộp Thông Tin</h2>
+            <label for="info-position">Vị trí:</label>
             <select id="info-position">
-                <option value="left">Left of Board</option>
-                <option value="right">Right of Board</option>
-                <option value="top">Top of Board</option>
-                <option value="bottom">Bottom of Board</option>
+                <option value="left">Bên trái bàn cờ</option>
+                <option value="right">Bên phải bàn cờ</option>
+                <option value="top">Phía trên bàn cờ</option>
+                <option value="bottom">Phía dưới bàn cờ</option>
             </select>
-            <label for="info-color">Background Color:</label>
+            <label for="info-color">Màu nền:</label>
             <input type="color" id="info-color">
-            <button id="settings-save">Save</button>
+            <button id="settings-save">Lưu</button>
         </div>
     </div>
-    <div id="loading" class="loading-spinner" style="display: none;">Loading...</div>
+    <div id="loading" class="loading-spinner" style="display: none;">Đang tải...</div>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>

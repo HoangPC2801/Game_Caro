@@ -1,4 +1,3 @@
-/* General Reset and Body Styling */
 * {
     margin: 0;
     padding: 0;
@@ -7,7 +6,7 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #e0eafc, #cfdef3);
+    background: linear-gradient(135deg, #70f680, #ea7667);
     min-height: 100vh;
     display: flex;
     justify-content: center;

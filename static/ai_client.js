@@ -23,7 +23,7 @@ function startTimer() {
     let timeLeft = 30;
     progressBar.style.width = "100%";
     timerInterval = setInterval(() => {
-        timeLeft -= 0.1; // Update every 100ms for smooth animation
+        timeLeft -= 0.1; // Cập nhật mỗi 100ms để có hoạt ảnh mượt mà
         const percentage = (timeLeft / 30) * 100;
         progressBar.style.width = `${percentage}%`;
         if (timeLeft <= 0) {
@@ -71,8 +71,8 @@ function makeMove(row, col, cell) {
 function restartGame() {
     socket.emit("restart_ai_game");
     restartButton.style.display = "none";
-    info.innerText = "You are 'X'. Start playing!";
-    turnText.innerText = "Turn: X";
+    info.innerText = "Bạn là 'X'. Bắt đầu chơi!";
+    turnText.innerText = "Lượt: X";
     timerContainer.style.display = "block";
     currentTurn = "X";
     createBoard();
@@ -97,7 +97,7 @@ socket.on("update_board_ai", (data) => {
     cell.innerText = symbol;
     cell.classList.add(symbol.toLowerCase());
     currentTurn = symbol === "X" ? "O" : "X";
-    turnText.innerText = `Turn: ${currentTurn}`;
+    turnText.innerText = `Lượt: ${currentTurn}`;
     loadingSpinner.style.display = "none";
     moveSound.play();
     if (currentTurn === "X") {
@@ -109,9 +109,9 @@ socket.on("game_over_ai", (data) => {
     clearTimer();
     let message = "";
     if (data.reason === "timeout") {
-        message = "🤖 AI wins due to timeout!";
+        message = "🤖 AI thắng vì hết giờ!";
     } else {
-        message = data.winner === mySymbol ? "🎉 You win!" : "🤖 AI wins!";
+        message = data.winner === mySymbol ? "🎉 Bạn thắng!" : "🤖 AI thắng!";
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;
@@ -133,7 +133,7 @@ socket.on("game_over_ai", (data) => {
 
 socket.on("timeout_ai", () => {
     clearTimer();
-    info.innerText = "🤖 AI wins due to timeout!";
+    info.innerText = "🤖 AI thắng vì hết giờ!";
     turnText.innerText = "";
     timerContainer.style.display = "none";
     restartButton.style.display = "block";
