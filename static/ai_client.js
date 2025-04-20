@@ -40,9 +40,19 @@ function clearTimer() {
     }
 }
 
+// Áp dụng skin và chủ đề
+function applySkinAndTheme() {
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
+    const boardTheme = localStorage.getItem('boardTheme') || 'classic';
+    boardDiv.className = `board ${boardTheme}`;
+    return { xSkin, oSkin };
+}
+
 // Khởi tạo bàn cờ
 function createBoard() {
     boardDiv.innerHTML = "";
+    applySkinAndTheme();
     for (let i = 0; i < boardSize; i++) {
         board[i] = [];
         for (let j = 0; j < boardSize; j++) {
@@ -94,7 +104,9 @@ socket.on("update_board_ai", (data) => {
     board[row][col] = symbol;
     const index = row * boardSize + col;
     const cell = boardDiv.children[index];
-    cell.innerText = symbol;
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
+    cell.innerText = symbol === 'X' ? xSkin : oSkin;
     cell.classList.add(symbol.toLowerCase());
     currentTurn = symbol === "X" ? "O" : "X";
     turnText.innerText = `Lượt: ${currentTurn}`;
@@ -107,11 +119,13 @@ socket.on("update_board_ai", (data) => {
 
 socket.on("game_over_ai", (data) => {
     clearTimer();
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
     let message = "";
     if (data.reason === "timeout") {
         message = "🤖 AI thắng vì hết giờ!";
     } else {
-        message = data.winner === mySymbol ? "🎉 Bạn thắng!" : "🤖 AI thắng!";
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${xSkin}'!` : `🤖 AI thắng với '${oSkin}'!`;
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;

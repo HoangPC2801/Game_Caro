@@ -95,9 +95,19 @@ function triggerConfetti() {
     setTimeout(() => confetti.reset(), 3000);
 }
 
+// Áp dụng skin và chủ đề
+function applySkinAndTheme() {
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
+    const boardTheme = localStorage.getItem('boardTheme') || 'classic';
+    boardDiv.className = `board ${boardTheme}`;
+    return { xSkin, oSkin };
+}
+
 // Khởi tạo bàn cờ
 function createBoard() {
     boardDiv.innerHTML = "";
+    const { xSkin, oSkin } = applySkinAndTheme();
     for (let i = 0; i < boardSize; i++) {
         board[i] = [];
         for (let j = 0; j < boardSize; j++) {
@@ -173,7 +183,6 @@ function togglePause() {
     }
     clickSound.play();
 }
-
 
 // Bật/tắt cửa sổ điều khiển game
 function toggleGameControls() {
@@ -271,7 +280,9 @@ socket.on("update_board", (data) => {
     board[row][col] = symbol;
     const index = row * boardSize + col;
     const cell = boardDiv.children[index];
-    cell.innerText = symbol;
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
+    cell.innerText = symbol === 'X' ? xSkin : oSkin;
     cell.classList.add(symbol.toLowerCase());
     document.querySelectorAll('.cell.latest-move').forEach(oldCell => {
         oldCell.classList.remove('latest-move');
@@ -289,7 +300,6 @@ socket.on("timer_update", (data) => {
     progressBar.style.width = `${percentage}%`;
 });
 
-
 socket.on("game_paused", (data) => {
     pauseButton.innerText = "Tiếp tục";
     info.innerText = "Trò chơi đã tạm dừng";
@@ -304,7 +314,9 @@ socket.on("game_paused", (data) => {
 socket.on("receive_message", (data) => {
     const messageDiv = document.createElement("div");
     messageDiv.className = `chat-message ${data.symbol.toLowerCase()}-message`;
-    messageDiv.innerText = `${data.symbol}: ${data.message}`;
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
+    messageDiv.innerText = `${data.symbol === 'X' ? xSkin : oSkin}: ${data.message}`;
     chatMessages.appendChild(messageDiv);
     if (isChatOpen) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -313,10 +325,12 @@ socket.on("receive_message", (data) => {
 
 socket.on("game_over", (data) => {
     let message = "";
+    const xSkin = localStorage.getItem('xSkin') || 'X';
+    const oSkin = localStorage.getItem('oSkin') || 'O';
     if (data.reason === "timeout") {
-        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol}' vì hết giờ!` : `🎉 Người chơi '${data.winner}' thắng vì hết giờ!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì hết giờ!`;
     } else if (data.reason === "win") {
-        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol}'!` : `🎉 Người chơi '${data.winner}' thắng!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}'!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng!`;
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
                 const index = row * boardSize + col;

@@ -13,6 +13,7 @@ socketio = SocketIO(app)
 
 rooms = {}
 ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X"}
+player_skins = {}  # Lưu trữ skin của người chơi theo session ID
 
 def start_timer(room, current_symbol):
     """Start a 30-second timer for the current player's turn."""

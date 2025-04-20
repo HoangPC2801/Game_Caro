@@ -296,7 +296,7 @@ h1 {
     transform: scale(1.2);
 }
 
-#chat-content as
+#chat-content {
     display: block;
     flex-direction: column;
 }
@@ -447,6 +447,27 @@ h1 {
     padding: 10px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     width: fit-content;
+}
+
+/* Board Themes */
+#board.classic {
+    background: #ffffff;
+    border: 2px solid #2c3e50;
+}
+
+#board.tech {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    border: 2px solid #00ddeb;
+}
+
+#board.jungle {
+    background: linear-gradient(135deg, #1a3c34, #4a7043);
+    border: 2px solid #8b9a46;
+}
+
+#board.space {
+    background: linear-gradient(135deg, #0b0b3b, #2b1b5e);
+    border: 2px solid #b721ff;
 }
 
 .cell {
