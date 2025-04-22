@@ -138,8 +138,8 @@ socket.on("game_over_ai", (data) => {
     const oSkin = localStorage.getItem('oSkin') || 'O';
     let message = "";
     if (data.reason === "timeout") {
-        message = "🤖 AI thắng vì bạn hết giờ!";
-    } else {
+        message = `🤖 AI thắng với '${oSkin}' vì bạn hết thời gian!`;
+    } else if (data.reason === "win") {
         message = data.winner === mySymbol ? `🎉 Bạn thắng với '${xSkin}'!` : `🤖 AI thắng với '${oSkin}'!`;
         if (data.winning_cells && data.winning_cells.length) {
             data.winning_cells.forEach(([row, col]) => {
@@ -148,21 +148,10 @@ socket.on("game_over_ai", (data) => {
                 cell.classList.add("winning");
             });
         }
+    } else if (data.reason === "draw") {
+        message = "🎉 Trò chơi kết thúc hòa!";
     }
     info.innerText = message;
-    turnText.innerText = "";
-    timerContainer.style.display = "none";
-    restartButton.style.display = "block";
-    loadingSpinner.style.display = "none";
-    winSound.play();
-    for (let cell of boardDiv.children) {
-        cell.onclick = null;
-    }
-});
-
-socket.on("timeout_ai", () => {
-    clearTimer();
-    info.innerText = "🤖 AI thắng vì bạn hết giờ!";
     turnText.innerText = "";
     timerContainer.style.display = "none";
     restartButton.style.display = "block";

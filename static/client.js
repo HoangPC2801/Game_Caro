@@ -384,7 +384,7 @@ socket.on("game_over", (data) => {
     const xSkin = localStorage.getItem('xSkin') || 'X';
     const oSkin = localStorage.getItem('oSkin') || 'O';
     if (data.reason === "timeout") {
-        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì hết giờ!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì '${mySymbol === 'O' ? xSkin : oSkin}' hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì bạn hết giờ!`;
     } else if (data.reason === "win") {
         message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}'!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng!`;
         if (data.winning_cells && data.winning_cells.length) {

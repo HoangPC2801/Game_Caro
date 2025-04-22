@@ -12,7 +12,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 rooms = {}  # Lưu trữ thông tin phòng: {room_id: {players, board, turn, timer, paused, move_count}}
-ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X", "difficulty": "medium"}
+ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X", "difficulty": "medium", "timer": None}
 player_skins = {}  # Lưu trữ skin của người chơi theo session ID
 
 def start_timer(room, current_symbol):
@@ -225,7 +225,7 @@ class MCTSNode:
                 best_move = random.choice(moves)
             elif difficulty == "medium" and random.random() < 0.3:  # 30% chọn ngẫu nhiên
                 best_move = random.choice(moves)
-            temp_board[best_move[0]][move[1]] = current_symbol
+            temp_board[best_move[0]][best_move[1]] = current_symbol
             if check_win(temp_board, best_move[0], best_move[1], current_symbol)[0]:
                 return 1 if current_symbol == "O" else -1
             last_move = best_move
@@ -412,10 +412,13 @@ def on_move_ai(data):
         is_win, winning_cells = check_win(board, row, col, symbol)
         if is_win:
             emit("game_over_ai", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'})
+            ai_game_state['timer'] = None
             return
         if is_board_full(board):
             emit("game_over_ai", {'winner': None, 'winning_cells': [], 'reason': 'draw'})
+            ai_game_state['timer'] = None
             return
+        ai_game_state['timer'] = None
         time_limit = 0.3 if difficulty == "easy" else 0.8 if difficulty == "medium" else 1.5
         ai_move = mcts(board, (row, col), time_limit=time_limit, difficulty=difficulty)
         if ai_move:
@@ -425,13 +428,22 @@ def on_move_ai(data):
             is_win, winning_cells = check_win(board, ai_row, ai_col, "O")
             if is_win:
                 emit("game_over_ai", {'winner': "O", 'winning_cells': winning_cells, 'reason': 'win'})
+                ai_game_state['timer'] = None
             elif is_board_full(board):
                 emit("game_over_ai", {'winner': None, 'winning_cells': [], 'reason': 'draw'})
+                ai_game_state['timer'] = None
+
+@socketio.on('timeout_ai')
+def on_timeout_ai():
+    global ai_game_state
+    if ai_game_state['turn'] == "X":  # Người chơi hết thời gian
+        emit("game_over_ai", {'winner': "O", 'winning_cells': [], 'reason': 'timeout'})
+        ai_game_state['timer'] = None
 
 @socketio.on('restart_ai_game')
 def on_restart_ai():
     global ai_game_state
-    ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X", "difficulty": ai_game_state.get('difficulty', 'medium')}
+    ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X", "difficulty": ai_game_state.get('difficulty', 'medium'), "timer": None}
     emit("update_board_ai", {'row': -1, 'col': -1, 'symbol': ""})
 
 if __name__ == '__main__':
