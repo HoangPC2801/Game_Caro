@@ -17,6 +17,7 @@
         </div>
         <input type="text" id="room-input" placeholder="Nhập mã phòng..." aria-label="Nhập mã phòng">
         <button onclick="joinRoom()">Vào Phòng</button>
+        <button id="back-to-home-btn">Quay lại</button>
     </div>
     <div id="game-area" style="display: none;">
         <div id="info-container">
@@ -29,6 +30,7 @@
             </div>
         </div>
         <div id="board"></div>
+        <div id="loading" class="loading-spinner" style="display: none;">Đang tải...</div>
     </div>
     <div id="game-controls-container">
         <div id="game-controls-header">
@@ -75,7 +77,6 @@
             <button id="settings-save">Lưu</button>
         </div>
     </div>
-    <div id="loading" class="loading-spinner" style="display: none;">Đang tải...</div>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>

@@ -53,7 +53,7 @@ h1 {
     border-color: #3498db;
 }
 
-#room-container button, #create-room-btn {
+#room-container button, #create-room-btn, #back-to-home-btn {
     padding: 10px 20px;
     font-size: 1rem;
     background: #3498db;
@@ -64,7 +64,7 @@ h1 {
     transition: background 0.3s ease, transform 0.2s ease;
 }
 
-#room-container button:hover, #create-room-btn:hover {
+#room-container button:hover, #create-room-btn:hover, #back-to-home-btn:hover {
     background: #2980b9;
     transform: translateY(-2px);
 }
@@ -676,7 +676,7 @@ h1 {
         width: 90%;
     }
 
-    #room-input, #room-container button, #create-room-btn {
+    #room-input, #room-container button, #create-room-btn, #back-to-home-btn {
         width: 100%;
     }
 

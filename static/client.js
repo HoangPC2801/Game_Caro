@@ -33,6 +33,7 @@ const infoPosition = document.getElementById("info-position");
 const infoColor = document.getElementById("info-color");
 const roomList = document.getElementById("room-list");
 const createRoomBtn = document.getElementById("create-room-btn");
+const backToHomeBtn = document.getElementById("back-to-home-btn");
 
 const clickSound = new Audio("/static/sounds/click.mp3");
 const moveSound = new Audio("/static/sounds/move.mp3");
@@ -271,10 +272,17 @@ settingsSave.addEventListener("click", saveSettings);
 
 createRoomBtn.addEventListener("click", createRoom);
 
+backToHomeBtn.addEventListener("click", () => {
+    window.location.href = "/";
+    clickSound.play();
+});
+
 // Load settings and fetch waiting rooms on page load
-loadSettings();
-fetchWaitingRooms();
-setInterval(fetchWaitingRooms, 5000); // Cập nhật danh sách phòng mỗi 5 giây
+document.addEventListener("DOMContentLoaded", () => {
+    loadSettings();
+    fetchWaitingRooms();
+    setInterval(fetchWaitingRooms, 5000); // Cập nhật danh sách phòng mỗi 5 giây
+});
 
 // Lắng nghe phản hồi từ server
 socket.on("room_created", (data) => {
@@ -376,7 +384,7 @@ socket.on("game_over", (data) => {
     const xSkin = localStorage.getItem('xSkin') || 'X';
     const oSkin = localStorage.getItem('oSkin') || 'O';
     if (data.reason === "timeout") {
-        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì '${mySymbol === 'O' ? xSkin : oSkin}' hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì bạn hết giờ!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì hết giờ!`;
     } else if (data.reason === "win") {
         message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}'!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng!`;
         if (data.winning_cells && data.winning_cells.length) {
