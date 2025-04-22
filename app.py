@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-rooms = {}  # Lưu trữ thông tin phòng: {room_id: {players, board, turn, timer, paused}}
+rooms = {}  # Lưu trữ thông tin phòng: {room_id: {players, board, turn, timer, paused, move_count}}
 ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X"}
 player_skins = {}  # Lưu trữ skin của người chơi theo session ID
 
@@ -32,6 +32,21 @@ def start_timer(room, current_symbol):
         winner = "O" if current_symbol == "X" else "X"
         socketio.emit('game_over', {'winner': winner, 'winning_cells': [], 'reason': 'timeout'}, room=room)
         rooms[room]['timer'] = None
+
+def shuffle_board(board):
+    """Shuffle the entire board randomly, preserving all symbols."""
+    flat_board = []
+    for row in board:
+        for cell in row:
+            flat_board.append(cell)
+    random.shuffle(flat_board)
+    new_board = [["" for _ in range(15)] for _ in range(15)]
+    index = 0
+    for i in range(15):
+        for j in range(15):
+            new_board[i][j] = flat_board[index]
+            index += 1
+    return new_board
 
 @app.route('/')
 def home():
@@ -248,7 +263,7 @@ def on_join(data):
     room = data.get('room')
     join_room(room)
     if room not in rooms:
-        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False}
+        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False, 'move_count': 0}
         emit('room_created', {'room': room}, room=sid)
     else:
         if len(rooms[room]['players']) < 2:
@@ -259,12 +274,29 @@ def on_join(data):
         else:
             emit('room_full', {}, room=sid)
 
+@socketio.on('join_dynamic_game')
+def on_join_dynamic(data):
+    sid = request.sid
+    room = data.get('room')
+    join_room(room)
+    if room not in rooms:
+        rooms[room] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False, 'move_count': 0}
+        emit('room_created', {'room': room}, room=sid)
+    else:
+        if len(rooms[room]['players']) < 2:
+            rooms[room]['players'].append(sid)
+            emit('start_dynamic_game', {'symbol': 'O'}, room=sid)
+            emit('start_dynamic_game', {'symbol': 'X'}, room=rooms[room]['players'][0])
+            socketio.start_background_task(start_timer, room, 'X')
+        else:
+            emit('room_full', {}, room=sid)
+
 @socketio.on('create_room')
 def on_create_room():
     """Tạo một phòng mới với ID duy nhất."""
     sid = request.sid
     room_id = str(uuid.uuid4())[:8]  # Tạo ID phòng ngẫu nhiên (8 ký tự)
-    rooms[room_id] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False}
+    rooms[room_id] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False, 'move_count': 0}
     join_room(room_id)
     emit('room_created', {'room': room_id}, room=sid)
 
@@ -290,6 +322,37 @@ def on_move(data):
                 rooms[room]['timer'] = None
                 rooms[room]['paused'] = False
             else:
+                next_symbol = 'O' if symbol == 'X' else 'X'
+                rooms[room]['timer'] = None
+                socketio.start_background_task(start_timer, room, next_symbol)
+
+@socketio.on('make_dynamic_move')
+def on_dynamic_move(data):
+    room = data['room']
+    row = data['row']
+    col = data['col']
+    symbol = data['symbol']
+    if room in rooms:
+        board = rooms[room]['board']
+        if board[row][col] == "" and not rooms[room]['paused']:
+            board[row][col] = symbol
+            rooms[room]['move_count'] += 1
+            rooms[room]['turn'] = 'O' if symbol == 'X' else 'X'
+            emit("update_board", {'row': row, 'col': col, 'symbol': symbol}, room=room)
+            is_win, winning_cells = check_win(board, row, col, symbol)
+            if is_win:
+                emit("game_over", {'winner': symbol, 'winning_cells': winning_cells, 'reason': 'win'}, room=room)
+                rooms[room]['timer'] = None
+                rooms[room]['paused'] = False
+            elif is_board_full(board):
+                emit("game_over", {'winner': None, 'winning_cells': [], 'reason': 'draw'}, room=room)
+                rooms[room]['timer'] = None
+                rooms[room]['paused'] = False
+            else:
+                if rooms[room]['move_count'] % 3 == 0:
+                    board = shuffle_board(board)
+                    rooms[room]['board'] = board
+                    emit("shuffle_board", {'board': board}, room=room)
                 next_symbol = 'O' if symbol == 'X' else 'X'
                 rooms[room]['timer'] = None
                 socketio.start_background_task(start_timer, room, next_symbol)
