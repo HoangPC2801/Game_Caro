@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import uuid
 import random
@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-rooms = {}
+rooms = {}  # Lưu trữ thông tin phòng: {room_id: {players, board, turn, timer, paused}}
 ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X"}
 player_skins = {}  # Lưu trữ skin của người chơi theo session ID
 
@@ -60,6 +60,16 @@ def multiplayer():
 @app.route('/customize-skin')
 def customize_skin():
     return render_template('customize_skin.html')
+
+@app.route('/waiting-rooms', methods=['GET'])
+def get_waiting_rooms():
+    """Trả về danh sách các phòng chờ (có ít hơn 2 người chơi)."""
+    waiting_rooms = [
+        {"room_id": room_id, "player_count": len(room_data['players'])}
+        for room_id, room_data in rooms.items()
+        if len(room_data['players']) < 2
+    ]
+    return jsonify(waiting_rooms)
 
 def check_win(board, row, col, symbol):
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
@@ -248,6 +258,15 @@ def on_join(data):
             socketio.start_background_task(start_timer, room, 'X')
         else:
             emit('room_full', {}, room=sid)
+
+@socketio.on('create_room')
+def on_create_room():
+    """Tạo một phòng mới với ID duy nhất."""
+    sid = request.sid
+    room_id = str(uuid.uuid4())[:8]  # Tạo ID phòng ngẫu nhiên (8 ký tự)
+    rooms[room_id] = {'players': [sid], 'board': [["" for _ in range(15)] for _ in range(15)], 'turn': 'X', 'timer': None, 'paused': False}
+    join_room(room_id)
+    emit('room_created', {'room': room_id}, room=sid)
 
 @socketio.on('make_move')
 def on_move(data):

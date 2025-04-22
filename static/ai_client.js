@@ -123,7 +123,7 @@ socket.on("game_over_ai", (data) => {
     const oSkin = localStorage.getItem('oSkin') || 'O';
     let message = "";
     if (data.reason === "timeout") {
-        message = "🤖 AI thắng vì hết giờ!";
+        message = "🤖 AI thắng vì bạn hết giờ!";
     } else {
         message = data.winner === mySymbol ? `🎉 Bạn thắng với '${xSkin}'!` : `🤖 AI thắng với '${oSkin}'!`;
         if (data.winning_cells && data.winning_cells.length) {
@@ -147,7 +147,7 @@ socket.on("game_over_ai", (data) => {
 
 socket.on("timeout_ai", () => {
     clearTimer();
-    info.innerText = "🤖 AI thắng vì hết giờ!";
+    info.innerText = "🤖 AI thắng vì bạn hết giờ!";
     turnText.innerText = "";
     timerContainer.style.display = "none";
     restartButton.style.display = "block";

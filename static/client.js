@@ -31,6 +31,8 @@ const settingsClose = document.getElementById("settings-close");
 const settingsSave = document.getElementById("settings-save");
 const infoPosition = document.getElementById("info-position");
 const infoColor = document.getElementById("info-color");
+const roomList = document.getElementById("room-list");
+const createRoomBtn = document.getElementById("create-room-btn");
 
 const clickSound = new Audio("/static/sounds/click.mp3");
 const moveSound = new Audio("/static/sounds/move.mp3");
@@ -131,9 +133,33 @@ function makeMove(row, col, cell) {
     }
 }
 
+// Lấy danh sách phòng chờ
+function fetchWaitingRooms() {
+    fetch('/waiting-rooms')
+        .then(response => response.json())
+        .then(rooms => {
+            roomList.innerHTML = "";
+            if (rooms.length === 0) {
+                roomList.innerHTML = "<li>Không có phòng chờ nào.</li>";
+            } else {
+                rooms.forEach(room => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `Phòng: ${room.room_id} (${room.player_count}/2) <button onclick="joinRoom('${room.room_id}')">Tham gia</button>`;
+                    roomList.appendChild(li);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi lấy danh sách phòng:', error);
+            roomList.innerHTML = "<li>Lỗi khi tải danh sách phòng.</li>";
+        });
+}
+
 // Hàm khi người dùng bấm "Vào phòng"
-function joinRoom() {
-    const roomCode = document.getElementById("room-input").value.trim();
+function joinRoom(roomCode) {
+    if (!roomCode) {
+        roomCode = document.getElementById("room-input").value.trim();
+    }
     if (roomCode === "") {
         alert("Vui lòng nhập mã phòng!");
         return;
@@ -141,9 +167,16 @@ function joinRoom() {
     currentRoom = roomCode;
     socket.emit("join_game", { room: roomCode });
     document.getElementById("room-container").style.display = "none";
+    document.getElementById("game-area").style.display = "flex";
     info.innerText = "Đang chờ người chơi khác...";
     infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
     loadingSpinner.style.display = "block";
+    clickSound.play();
+}
+
+// Hàm tạo phòng mới
+function createRoom() {
+    socket.emit("create_room");
     clickSound.play();
 }
 
@@ -236,10 +269,23 @@ settingsClose.addEventListener("click", closeSettings);
 
 settingsSave.addEventListener("click", saveSettings);
 
-// Load settings on page load
+createRoomBtn.addEventListener("click", createRoom);
+
+// Load settings and fetch waiting rooms on page load
 loadSettings();
+fetchWaitingRooms();
+setInterval(fetchWaitingRooms, 5000); // Cập nhật danh sách phòng mỗi 5 giây
 
 // Lắng nghe phản hồi từ server
+socket.on("room_created", (data) => {
+    currentRoom = data.room;
+    document.getElementById("room-container").style.display = "none";
+    document.getElementById("game-area").style.display = "flex";
+    info.innerText = `Phòng ${data.room} đã được tạo. Đang chờ người chơi khác...`;
+    infoContainer.style.backgroundColor = localStorage.getItem("infoColor") || "#ffffff";
+    loadingSpinner.style.display = "block";
+});
+
 socket.on("start_game", (data) => {
     mySymbol = data.symbol;
     info.innerText = `Bạn là '${mySymbol}'. Chơi nào!`;
@@ -272,7 +318,9 @@ socket.on("start_game", (data) => {
 socket.on("room_full", () => {
     alert("Phòng đã đầy! Hãy thử phòng khác.");
     loadingSpinner.style.display = "none";
-    location.reload();
+    document.getElementById("room-container").style.display = "block";
+    document.getElementById("game-area").style.display = "none";
+    fetchWaitingRooms();
 });
 
 socket.on("update_board", (data) => {
@@ -328,7 +376,7 @@ socket.on("game_over", (data) => {
     const xSkin = localStorage.getItem('xSkin') || 'X';
     const oSkin = localStorage.getItem('oSkin') || 'O';
     if (data.reason === "timeout") {
-        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì hết giờ!`;
+        message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}' vì '${mySymbol === 'O' ? xSkin : oSkin}' hết giờ!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng vì bạn hết giờ!`;
     } else if (data.reason === "win") {
         message = data.winner === mySymbol ? `🎉 Bạn thắng với '${mySymbol === 'X' ? xSkin : oSkin}'!` : `🎉 Người chơi '${data.winner === 'X' ? xSkin : oSkin}' thắng!`;
         if (data.winning_cells && data.winning_cells.length) {

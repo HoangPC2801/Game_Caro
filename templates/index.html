@@ -10,10 +10,15 @@
 <body>
     <h1><span>🎮</span> Caro Online</h1>
     <div id="room-container">
+        <button id="create-room-btn">Tạo Phòng Mới</button>
+        <div id="waiting-rooms">
+            <h3>Phòng Chờ</h3>
+            <ul id="room-list"></ul>
+        </div>
         <input type="text" id="room-input" placeholder="Nhập mã phòng..." aria-label="Nhập mã phòng">
         <button onclick="joinRoom()">Vào Phòng</button>
     </div>
-    <div id="game-area">
+    <div id="game-area" style="display: none;">
         <div id="info-container">
             <div id="info-header">
                 <span>Thông Tin</span>
@@ -75,5 +80,5 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="{{ url_for('static', filename='client.js') }}"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9341b1002e5c53b6',t:'MTc0NTI4ODk0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
