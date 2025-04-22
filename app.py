@@ -12,7 +12,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 rooms = {}  # Lưu trữ thông tin phòng: {room_id: {players, board, turn, timer, paused, move_count}}
-ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X"}
+ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X", "difficulty": "medium"}
 player_skins = {}  # Lưu trữ skin của người chơi theo session ID
 
 def start_timer(room, current_symbol):
@@ -204,7 +204,7 @@ class MCTSNode:
             child = MCTSNode(self.board, move, self, opponent_symbol)
             self.children.append(child)
 
-    def simulate(self):
+    def simulate(self, difficulty="medium"):
         temp_board = copy.deepcopy(self.board)
         last_move = self.move
         current_symbol = "X" if self.symbol == "O" else "O"
@@ -221,9 +221,11 @@ class MCTSNode:
                 if score > best_score:
                     best_score = score
                     best_move = move
-            if random.random() < 0.2:
+            if difficulty == "easy" and random.random() < 0.7:  # 70% chọn ngẫu nhiên
                 best_move = random.choice(moves)
-            temp_board[best_move[0]][best_move[1]] = current_symbol
+            elif difficulty == "medium" and random.random() < 0.3:  # 30% chọn ngẫu nhiên
+                best_move = random.choice(moves)
+            temp_board[best_move[0]][move[1]] = current_symbol
             if check_win(temp_board, best_move[0], best_move[1], current_symbol)[0]:
                 return 1 if current_symbol == "O" else -1
             last_move = best_move
@@ -235,7 +237,12 @@ class MCTSNode:
             return -0.5
         return 0
 
-def mcts(board, last_move, time_limit=0.8):
+def mcts(board, last_move, time_limit=0.8, difficulty="medium"):
+    if difficulty == "easy":
+        moves = get_valid_moves(board, last_move)
+        if moves:
+            return random.choice(moves)  # Chọn ngẫu nhiên ở mức dễ
+        return None
     root = MCTSNode(board, symbol="O")
     start_time = time.time()
     while time.time() - start_time < time_limit:
@@ -247,7 +254,7 @@ def mcts(board, last_move, time_limit=0.8):
         sim_node = node
         if node.children:
             sim_node = random.choice(node.children)
-        result = sim_node.simulate()
+        result = sim_node.simulate(difficulty=difficulty)
         while sim_node:
             sim_node.visits += 1
             sim_node.wins += result if sim_node.symbol == "O" else -result
@@ -383,6 +390,14 @@ def on_send_message(data):
     if room in rooms and message:
         emit('receive_message', {'symbol': symbol, 'message': message}, room=room)
 
+@socketio.on('set_difficulty')
+def on_set_difficulty(data):
+    global ai_game_state
+    difficulty = data['difficulty']
+    if difficulty in ["easy", "medium", "hard"]:
+        ai_game_state['difficulty'] = difficulty
+        emit("difficulty_set", {'difficulty': difficulty})
+
 @socketio.on('make_move_ai')
 def on_move_ai(data):
     global ai_game_state
@@ -390,6 +405,7 @@ def on_move_ai(data):
     col = data['col']
     symbol = data['symbol']
     board = ai_game_state['board']
+    difficulty = ai_game_state['difficulty']
     if board[row][col] == "":
         board[row][col] = symbol
         emit("update_board_ai", {'row': row, 'col': col, 'symbol': symbol})
@@ -400,7 +416,8 @@ def on_move_ai(data):
         if is_board_full(board):
             emit("game_over_ai", {'winner': None, 'winning_cells': [], 'reason': 'draw'})
             return
-        ai_move = mcts(board, (row, col), time_limit=0.8)
+        time_limit = 0.3 if difficulty == "easy" else 0.8 if difficulty == "medium" else 1.5
+        ai_move = mcts(board, (row, col), time_limit=time_limit, difficulty=difficulty)
         if ai_move:
             ai_row, ai_col = ai_move
             board[ai_row][ai_col] = "O"
@@ -414,7 +431,7 @@ def on_move_ai(data):
 @socketio.on('restart_ai_game')
 def on_restart_ai():
     global ai_game_state
-    ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X"}
+    ai_game_state = {"board": [["" for _ in range(15)] for _ in range(15)], "turn": "X", "difficulty": ai_game_state.get('difficulty', 'medium')}
     emit("update_board_ai", {'row': -1, 'col': -1, 'symbol': ""})
 
 if __name__ == '__main__':

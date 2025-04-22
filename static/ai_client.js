@@ -11,6 +11,7 @@ const timerContainer = document.getElementById("timer");
 const progressBar = document.getElementById("progress-bar");
 const restartButton = document.getElementById("restart-button");
 const loadingSpinner = document.getElementById("loading");
+const difficultySelect = document.getElementById("difficulty");
 
 const clickSound = new Audio("/static/sounds/click.mp3");
 const moveSound = new Audio("/static/sounds/move.mp3");
@@ -86,12 +87,26 @@ function restartGame() {
     timerContainer.style.display = "block";
     currentTurn = "X";
     createBoard();
+    setDifficulty();
     startTimer();
 }
 
-// Khởi tạo bàn cờ và timer khi tải trang
+// Thiết lập mức độ khó
+function setDifficulty() {
+    const difficulty = difficultySelect.value;
+    socket.emit("set_difficulty", { difficulty });
+}
+
+// Khởi tạo bàn cờ, timer và mức độ khó khi tải trang
 createBoard();
+setDifficulty();
 startTimer();
+
+// Lắng nghe thay đổi mức độ khó
+difficultySelect.addEventListener("change", () => {
+    setDifficulty();
+    clickSound.play();
+});
 
 // Lắng nghe phản hồi từ server
 socket.on("update_board_ai", (data) => {
@@ -156,4 +171,11 @@ socket.on("timeout_ai", () => {
     for (let cell of boardDiv.children) {
         cell.onclick = null;
     }
+});
+
+socket.on("difficulty_set", (data) => {
+    info.innerText = `Mức độ khó đã được đặt thành: ${data.difficulty === 'easy' ? 'Dễ' : data.difficulty === 'medium' ? 'Trung bình' : 'Khó'}`;
+    setTimeout(() => {
+        info.innerText = "Bạn là 'X'. Bắt đầu chơi!";
+    }, 1000);
 });
